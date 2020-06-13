@@ -15,7 +15,7 @@ Available integrations:
    - Binance (BTC exchange)
    
 ## Demo
-[asset_manager_demo.gif]
+![](asset_manager_demo.gif)
 
 ## Getting Started
 
