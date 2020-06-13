@@ -13,6 +13,9 @@ Available integrations:
    - Bittrex (BTC exchange)
    - Kraken (BTC exchange)
    - Binance (BTC exchange)
+   
+## Demo
+[asset_manager_demo.gif]
 
 ## Getting Started
 
