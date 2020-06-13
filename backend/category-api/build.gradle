@@ -1,0 +1,47 @@
+// put this in your 'backend' module
+// each subproject will contain a lambda so the below script will automatically resolve its path.
+// if you want your lambdas to share same source you can simply remove 'subprojects'
+
+subprojects {
+    task install(type: Exec) {
+        doFirst {
+            println "installing node modules.."
+            exec {
+                // remove any dev dependencies installed locally before deploying
+                commandLine "npm", "prune", "--production"
+            }
+        }
+        commandLine "npm", "install", "--production"
+    }
+    task packageLambda(type: Exec, dependsOn: install) {
+        doFirst {
+            println "packaging $project.name.."
+        }
+        commandLine "zip", "-9", "-FS", "-r", "function.zip", "."
+    }
+}
+
+task deploy(type: Exec, dependsOn: subprojects.tasks['packageLambda']) {
+    def profile = aws_profile
+    def stage = stage
+    def aws_region = aws_region
+
+    def tf_bucket = "${tf_bucket}${stage}"
+    def tf_bucket_key = tf_bucket_key
+    def tf_locks_table = "${tf_locks_table}${stage}"
+
+    def frontend_bucket_name = "${frontend_bucket_name}${stage}"
+
+    doFirst {
+        println "testong properties :"
+        println "deploying to ${stage}.."
+    }
+    commandLine "bash", "../../terraform-common/deploy.sh",
+            "-p", "$profile",
+            "-b", "$tf_bucket",
+            "-k", "$tf_bucket_key",
+            "-d", "$tf_locks_table",
+            "-s", "$stage",
+            "-f", "$frontend_bucket_name",
+            "-r", "$aws_region"
+}
