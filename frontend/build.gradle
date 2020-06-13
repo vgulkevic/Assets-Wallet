@@ -1,0 +1,18 @@
+task packFrontend(type: Exec) {
+    def stage = stage
+    def api_url = api_url
+    def region = aws_region
+    def userPoolId = userPoolId
+    def userPoolWebClientId = userPoolWebClientId
+
+    doFirst {
+        println "packing frontend to ${stage}.. api url=${api_url}"
+    }
+    environment "REACT_APP_API_URL", "$api_url"
+    environment "REACT_APP_STAGE", "$stage"
+    environment "REACT_APP_REGION", "$region"
+    environment "REACT_APP_USER_POOL_ID", "$userPoolId"
+    environment "REACT_APP_USER_POOL_CLIENT_ID", "$userPoolWebClientId"
+
+    commandLine "npm", "run", "build"
+}

@@ -1,0 +1,18 @@
+subprojects {
+    task install(type: Exec) {
+        doFirst {
+            println "installing node modules.."
+            exec {
+                // remove any dev dependencies installed locally before deploying
+                commandLine "npm", "prune", "--production"
+            }
+        }
+        commandLine "npm", "install", "--production"
+    }
+}
+task packageLayer(type: Exec, dependsOn: subprojects.tasks['install']) {
+    doFirst {
+        println "packaging $project.name.."
+    }
+    commandLine "zip", "-9", "-FS", "-r", "function.zip", "nodejs"
+}

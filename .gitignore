@@ -1,0 +1,65 @@
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+**/*.DS_Store
+**/*.DS_Store*
+
+.gradle/
+**/build/
+**/out
+**/out/
+/*/*/.serverless/
+/*/.serverless/
+reports/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+*.iws
+*.iml
+*.ipr
+
+.idea/workspace.xml
+.idea/uiDesigner.xml
+.idea/$PRODUCT_WORKSPACE_FILE$
+.idea/$CACHE_FILE$
+.idea/libraries/
+#.idea/misc.xml
+
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+### VS Code ###
+.vscode/
+/.idea/vcs.xml
+
+# package directories
+node_modules
+jspm_packages
+function.zip
+layer.zip
+.terraform
+terraform.tfstate
+
+# Serverless directories
+.serverless
+/intuit-service/layer.zip
+
+!intuit-service/node_modules
+!prospect-service/node_modules

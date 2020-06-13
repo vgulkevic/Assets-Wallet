@@ -1,0 +1,16 @@
+{
+  "name": "common",
+  "version": "1.0.0",
+  "description": "Shared code",
+  "private": true,
+  "main": "index.js",
+  "author": "vladc",
+  "license": "ISC",
+  "devDependencies": {
+    "aws-sdk": "^2.7.0"
+  },
+  "dependencies": {
+    "@types/node": "^13.13.5",
+    "axios": "^0.19.2"
+  }
+}
