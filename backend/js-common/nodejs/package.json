@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@types/node": "^13.13.5",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "uuid": "^8.1.0",
     "dinero.js": "^1.8.1",
     "crypto": "^1.0.1",
