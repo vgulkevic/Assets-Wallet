@@ -23,7 +23,7 @@ const mapCategory = (category, selectedCurrencies, rates) => {
             name: asset.name,
             amount: asset.amount,
             currency: asset.currency,
-            rawAmount: asset.btcValue ? roundNumberToDp(asset.btcValue, 8) : getCurrencySymbolFromCurrencyCode(asset.currency) + convertCurrency(asset.amount, rates, asset.currency, asset.currency),
+            rawAmount: asset.btcValue ? roundNumberToDp(asset.btcValue, 8) + "₿" : getCurrencySymbolFromCurrencyCode(asset.currency) + convertCurrency(asset.amount, rates, asset.currency, asset.currency),
             amountInMainCurrency: convertCurrency(asset.amount, rates, asset.currency, selectedCurrencies.main),
             amountInSecondaryCurrency: convertCurrency(asset.amount, rates, asset.currency, selectedCurrencies.secondary),
         };

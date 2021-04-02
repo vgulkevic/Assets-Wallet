@@ -13,7 +13,7 @@ const debugReturnPromise =  () => {
 const {thunk: fetchCurrencyRates, slice} = createGetUpdateEntitySlice(
     "currencyRates",
     CURRENCY_RATES_STORE_NAME,
-    "https://api.exchangeratesapi.io/latest?base=",
+    "https://api.exchangerate.host/latest?base=",
     "currencyRates",
     true,
     debugReturnPromise,
