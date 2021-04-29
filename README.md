@@ -1,6 +1,6 @@
 # Assets Wallet
 
-If you store your money on multiple banks, BTC exchanges and in cash it is extremely inconvenient to track the amounts you have on each and in different currencies. You have to either login into each of the systems every time or use Excel spreadsheet/Notepad. 
+If you store your money in multiple banks, BTC exchanges and in cash it is extremely inconvenient to track all your balances and convert them to different currencies. You have to either login into each of the systems every time you want to check how much money you have overall or use Excel spreadsheet/Notepad to track this.
 
 This app allows you track your holdings/assets value in different currencies in a single place.
 
