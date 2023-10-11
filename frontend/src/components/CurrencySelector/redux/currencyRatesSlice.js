@@ -1,6 +1,7 @@
 import {createGetUpdateEntitySlice} from "../../../redux/utils/getUpdateEntitySliceFactory";
 import {data} from "../../../data";
 import {randomIntFromInterval} from "../../../utils/randomNumber";
+import {FX_API_KEY} from "../../../profile";
 
 const CURRENCY_RATES_STORE_NAME = "currencyRates";
 
@@ -13,7 +14,7 @@ const debugReturnPromise =  () => {
 const {thunk: fetchCurrencyRates, slice} = createGetUpdateEntitySlice(
     "currencyRates",
     CURRENCY_RATES_STORE_NAME,
-    "https://api.exchangerate.host/latest?base=",
+    `http://api.exchangerate.host/live?access_key=${FX_API_KEY}&currencies=GBP,USD,EUR&source=`,
     "currencyRates",
     true,
     debugReturnPromise,

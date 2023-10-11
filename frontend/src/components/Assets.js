@@ -39,13 +39,6 @@ export default function Assets() {
         }
     }, [dispatch, selectedCurrencies, previousSelectedCurrencies]);
 
-    useEffect(() => {
-        if (currencyRates) {
-            fx.base = currencyRates.base;
-            fx.rates = currencyRates.rates;
-        }
-    }, [currencyRates]);
-
     return (
         <div className={classes.root}>
             <Container maxWidth="lg">

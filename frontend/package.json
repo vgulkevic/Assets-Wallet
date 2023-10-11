@@ -13,7 +13,6 @@
     "aws-amplify": "^3.0.14",
     "axios": "^0.19.2",
     "lodash": "^4.17.15",
-    "money": "^0.2.0",
     "notistack": "^0.9.7",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -26,8 +25,8 @@
     "react-router-dom": "^5.1.2"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
