@@ -5,7 +5,7 @@
   "private": true,
   "author": "vladc",
   "devDependencies": {
-    "aws-sdk": "^2.7.0"
+    "aws-sdk": "^2.814.0"
   },
   "dependencies": {
     "@types/node": "^13.13.5",
