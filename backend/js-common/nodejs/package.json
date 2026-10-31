@@ -5,9 +5,6 @@
   "private": true,
   "author": "vladc",
   "dependencies": {
-    "axios": "^1.21.0",
-    "custom_common_lib": "file:../custom/common_lib",
-    "dinero.js": "^1.9.1",
-    "qs": "^6.17.1"
+    "custom_common_lib": "file:../custom/common_lib"
   }
 }

@@ -21,7 +21,3 @@ output "cloudfront_distribution_id" {
 output "frontend_url" {
   value = "https://${module.frontend_deploy.domain_name}"
 }
-
-output "fx_api_key_parameter" {
-  value = module.currency_rates_api.fx_api_key_parameter
-}

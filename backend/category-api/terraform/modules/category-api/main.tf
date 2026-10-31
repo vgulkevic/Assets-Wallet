@@ -167,29 +167,8 @@ module "delete_category_lambda" {
 
 ### CATEGORIES END
 
-
 ### ASSETS START
 # ASSETS ENDPOINTS
-
-module "fetch_category_assets_endpoint" {
-  source                          = "../../../../../terraform-common/modules/api_integration"
-  service_prefix                  = var.service_prefix
-  stage                           = var.stage
-  aws_region                      = var.aws_region
-  rest_api_id                     = var.rest_api_id
-  parent_resource_id              = var.parent_resource_id
-  api_path                        = "fetch-assets"
-  http_method                     = "GET"
-  integration_type                = "AWS_PROXY"
-  integration_http_method         = "POST"
-  lambda_invoke_arn               = module.fetch_category_assets_lambda.lambda_invoke_arn
-  enable_async_lambda_integration = false
-  validator_id                    = var.api_request_validator_id
-  api_key_required                = false
-  authorizer_id                   = var.authorizer_id
-  authorization_type              = "COGNITO_USER_POOLS"
-}
-
 
 module "create_asset_endpoint" {
   source                          = "../../../../../terraform-common/modules/api_integration"
@@ -249,27 +228,6 @@ module "delete_asset_endpoint" {
 }
 
 # ASSETS LAMBDAS
-module "fetch_category_assets_lambda" {
-  source         = "../../../../../terraform-common/modules/api_gateway_lambda"
-  service_prefix = var.service_prefix
-  aws_region     = var.aws_region
-  stage          = var.stage
-  file_name      = "../category-persistence-lambda/function.zip"
-  function_name  = "${var.service_prefix}-fetch-category-assets-handler-${var.stage}"
-  handler        = "handler.fetchCategoryAssetsHandler"
-  memory_size    = 128
-  runtime        = "nodejs24.x"
-  layers         = var.layers
-  rest_api_id    = var.rest_api_id
-
-  attached_policies = [
-    aws_iam_policy.allow_dynamo_policy.arn
-  ]
-
-  env_vars = {
-    CUSTOM_CATEGORIES_TABLE = module.categories_table.dynamodb_name
-  }
-}
 
 module "create_category_asset_lambda" {
   source         = "../../../../../terraform-common/modules/api_gateway_lambda"
@@ -337,7 +295,6 @@ module "delete_category_asset_lambda" {
   }
 }
 ### ASSETS END
-
 
 module "categories_table" {
   source          = "../../../../../terraform-common/modules/dynamodb"

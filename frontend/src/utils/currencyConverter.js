@@ -12,6 +12,6 @@ export default function convertCurrency(amount, rates, currencyFrom, currencyTo)
             return roundNumberTo2Dp(amount * rates.quotes[currencyFrom + currencyTo]);
         }
     } else {
-        return roundNumberTo2Dp(parseInt(amount));
+        return roundNumberTo2Dp(parseFloat(amount));
     }
 }

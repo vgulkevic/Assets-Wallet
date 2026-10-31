@@ -3,7 +3,6 @@
 const {ApiGatewayUtils} = require('custom_common_lib');
 const {CategoriesOperations} = require('./service/CategoriesOperations.js');
 const {CustomCategoriesOperations} = require('./service/CustomCategoriesOperations.js');
-const {ApiServiceIntegratedCategoryOperations} = require('./service/ApiServiceIntegratedCategoryOperations.js');
 
 module.exports.getCategoriesHandler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
@@ -18,10 +17,7 @@ module.exports.getCategoriesHandler = async (event) => {
         id: category.CategoryUid,
         name: category.CategoryName,
         assets: CustomCategoriesOperations.mapAssetsMapToArray(category.Assets),
-        categoryType: category.CategoryType,
-        apiKey: ApiServiceIntegratedCategoryOperations.maskApiKey(category.ApiKey),
-        apiKeySecret: ApiServiceIntegratedCategoryOperations.maskApiKey(category.ApiKeySecret),
-        integrationService: category.IntegrationService
+        categoryType: category.CategoryType
       }
     }));
   } catch (e) {
@@ -37,38 +33,20 @@ module.exports.createCategoryHandler = async (event) => {
   console.log(JSON.stringify(event));
 
   try {
-    let res;
-
     const req = JSON.parse(event.body);
-    if (req.categoryType === 'CUSTOM_CATEGORY') {
-      res = await CustomCategoriesOperations.createCustomCategory(req, event.requestContext.authorizer.claims.sub);
-
-      const {CategoryUid, CategoryName, CategoryType, Assets} = {...res};
-
-      return ApiGatewayUtils.successResponse({
-        id: CategoryUid,
-        name: CategoryName,
-        categoryType: CategoryType,
-        assets: Assets
-      });
-
-    } else {
-      res = await ApiServiceIntegratedCategoryOperations.createApiIntegratedCategory(req, event.requestContext.authorizer.claims.sub);
-
-      const {CategoryUid, CategoryName, CategoryType, ApiKey, ApiKeySecret, IntegrationService} = {...res};
-
-      return ApiGatewayUtils.successResponse({
-        id: CategoryUid,
-        name: CategoryName,
-        assets: [],
-        categoryType: CategoryType,
-        apiKey: ApiServiceIntegratedCategoryOperations.maskApiKey(ApiKey),
-        apiKeySecret: ApiServiceIntegratedCategoryOperations.maskApiKey(ApiKeySecret),
-        integrationService: IntegrationService
-      });
+    if (req.categoryType !== 'CUSTOM_CATEGORY') {
+      return ApiGatewayUtils.badRequest();
     }
 
+    const res = await CustomCategoriesOperations.createCustomCategory(req, event.requestContext.authorizer.claims.sub);
+    const {CategoryUid, CategoryName, CategoryType, Assets} = {...res};
 
+    return ApiGatewayUtils.successResponse({
+      id: CategoryUid,
+      name: CategoryName,
+      categoryType: CategoryType,
+      assets: Assets
+    });
   } catch (e) {
     console.log(JSON.stringify(e));
     return ApiGatewayUtils.internalError('Internal Error');
@@ -84,36 +62,19 @@ module.exports.updateCategoryHandler = async (event) => {
   try {
     const req = JSON.parse(event.body);
 
-    if (!req.categoryType) {
-      return ApiGatewayUtils.internalError('Internal Error');
+    if (req.categoryType !== 'CUSTOM_CATEGORY') {
+      return ApiGatewayUtils.badRequest();
     }
 
-    if (req.categoryType === 'CUSTOM_CATEGORY') {
-      const res = await CustomCategoriesOperations.updateCustomCategory(req, event.requestContext.authorizer.claims.sub);
-      const {CategoryUid, CategoryName, CategoryType, Assets} = {...res.Attributes};
+    const res = await CustomCategoriesOperations.updateCustomCategory(req, event.requestContext.authorizer.claims.sub);
+    const {CategoryUid, CategoryName, CategoryType, Assets} = {...res.Attributes};
 
-      return ApiGatewayUtils.successResponse({
-        id: CategoryUid,
-        name: CategoryName,
-        categoryType: CategoryType,
-        assets: CustomCategoriesOperations.mapAssetsMapToArray(Assets)
-      });
-    }
-    else {
-      const res = await ApiServiceIntegratedCategoryOperations.updateApiServiceIntegratedCategory(req, event.requestContext.authorizer.claims.sub);
-
-      const {CategoryUid, CategoryName, CategoryType, ApiKey, ApiKeySecret, IntegrationService} = {...res.Attributes};
-
-      return ApiGatewayUtils.successResponse({
-        id: CategoryUid,
-        name: CategoryName,
-        assets: [],
-        categoryType: CategoryType,
-        apiKey: ApiServiceIntegratedCategoryOperations.maskApiKey(ApiKey),
-        apiKeySecret: ApiServiceIntegratedCategoryOperations.maskApiKey(ApiKeySecret),
-        integrationService: IntegrationService
-      });
-    }
+    return ApiGatewayUtils.successResponse({
+      id: CategoryUid,
+      name: CategoryName,
+      categoryType: CategoryType,
+      assets: CustomCategoriesOperations.mapAssetsMapToArray(Assets)
+    });
   } catch (e) {
     console.log(JSON.stringify(e));
     return ApiGatewayUtils.internalError('Internal Error');
@@ -228,38 +189,3 @@ module.exports.deleteCategoryAssetHandler = async (event) => {
     return ApiGatewayUtils.internalError('Internal Error');
   }
 }
-
-module.exports.fetchCategoryAssetsHandler = async (event) => {
-  if (event.httpMethod === "OPTIONS") {
-    return ApiGatewayUtils.successResponse();
-  }
-
-  console.log(JSON.stringify(event));
-
-  try {
-    if (!event.queryStringParameters || !event.queryStringParameters.categoryId) {
-      return ApiGatewayUtils.badRequest();
-    }
-
-    const item = await ApiServiceIntegratedCategoryOperations.getCategory(event.queryStringParameters.categoryId, event.requestContext.authorizer.claims.sub);
-    const category = {
-      id: item.CategoryUid,
-      name: item.CategoryName,
-      categoryType: item.CategoryType,
-      apiKey: item.ApiKey,
-      apiKeySecret: item.ApiKeySecret,
-      integrationService: item.IntegrationService
-    };
-
-    if (!item.CategoryUid) {
-      return ApiGatewayUtils.notFound();
-    }
-
-    const categoryWithFetchedAssets = await ApiServiceIntegratedCategoryOperations.fetchAssets(category);
-    return ApiGatewayUtils.successResponse(categoryWithFetchedAssets);
-
-  } catch (e) {
-    console.log(JSON.stringify(e));
-    return ApiGatewayUtils.internalError('Internal Error');
-  }
-};

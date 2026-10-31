@@ -29,34 +29,5 @@ module "currency_rates_lambda" {
   runtime        = "nodejs24.x"
   rest_api_id    = var.rest_api_id
 
-  attached_policies = [
-    aws_iam_policy.read_fx_api_key_policy.arn
-  ]
-
-  env_vars = {
-    FX_API_KEY_PARAMETER = local.fx_api_key_parameter
-  }
-}
-
-# The exchangerate.host API key is kept out of the repo and Terraform state.
-# Create it once per stage:
-#   aws ssm put-parameter --type SecureString --name /asset-manager/<stage>/fx-api-key --value <key>
-locals {
-  fx_api_key_parameter = "/${var.service_prefix}/${var.stage}/fx-api-key"
-}
-
-data "aws_caller_identity" "account" {}
-
-resource "aws_iam_policy" "read_fx_api_key_policy" {
-  name_prefix = "${var.service_prefix}-${var.stage}"
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["ssm:GetParameter"]
-        Resource = ["arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.account.account_id}:parameter${local.fx_api_key_parameter}"]
-      }
-    ]
-  })
+  attached_policies = []
 }

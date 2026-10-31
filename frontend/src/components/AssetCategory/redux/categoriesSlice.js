@@ -127,28 +127,6 @@ const deleteCategoryAsyncThunk = createAsyncThunk(
     }
 );
 
-const fetchCategoryAssetsAsyncThunk = createAsyncThunk(
-    "/category/assets/get",
-    async (arg, thunkAPI) => {
-
-        const categoryId = arg;
-
-        const {categoryAssetsFetchRequestIds, categoryAssetsFetching} = thunkAPI.getState()[CATEGORIES_STORE_NAME];
-        const {user} = thunkAPI.getState()[AUTH_STORE_NAME];
-
-        if (!categoryAssetsFetching[categoryId] || thunkAPI.requestId !== categoryAssetsFetchRequestIds[categoryId]) {
-            return;
-        }
-
-        const authHeader = user ? {"Authorization": await getIdToken()} : {};
-
-        const res = await getHttpClient().get(BASE_API_URL + "/asset-manager/fetch-assets?categoryId=" + arg, {headers: authHeader});
-
-        return res.data;
-
-    }
-);
-
 const categorySlice = createSlice({
     name: "category",
     initialState: {
@@ -167,11 +145,7 @@ const categorySlice = createSlice({
 
         deleting: false,
         currentDeleteRequestId: null,
-        deleteError: null,
-
-        categoryAssetsFetching: {},
-        categoryAssetsFetchRequestIds: {},
-        categoryAssetsFetchErrors: {}
+        deleteError: null
     },
     reducers: {
         // asset
@@ -238,57 +212,6 @@ const categorySlice = createSlice({
                 action.asyncDispatch(enqueueSnackbar(
                     {
                         message: state.fetchError,
-                        options: {
-                            variant: 'error'
-                        }
-                    }
-                ));
-            }
-        },
-
-        // FETCH CATEGORY ASSETS
-        [fetchCategoryAssetsAsyncThunk.pending]: (state, action) => {
-            const categoryId = action.meta.arg;
-            if (!state.categoryAssetsFetching[categoryId]) {
-                state.categoryAssetsFetching[categoryId] = true;
-                state.categoryAssetsFetchRequestIds[categoryId] = action.meta.requestId;
-                state.categoryAssetsFetchErrors[categoryId] = null;
-            }
-        },
-        [fetchCategoryAssetsAsyncThunk.fulfilled]: (state, action) => {
-            const categoryId = action.meta.arg;
-
-            const {requestId} = action.meta;
-            if (state.categoryAssetsFetching[categoryId] && state.categoryAssetsFetchRequestIds[categoryId] === requestId) {
-
-                const updatedCategory = action.payload;
-                state.entity = state.entity.map((cat) => {
-                    if (cat.id !== updatedCategory.id) {
-                        return cat;
-                    }
-
-                    return {
-                        ...cat,
-                        assets: updatedCategory.assets
-                    };
-                });
-
-                state.categoryAssetsFetching[categoryId] = false;
-                state.categoryAssetsFetchRequestIds[categoryId] = null;
-                state.categoryAssetsFetchErrors[categoryId] = null;
-            }
-        },
-        [fetchCategoryAssetsAsyncThunk.rejected]: (state, action) => {
-            const categoryId = action.meta.arg;
-
-            const {requestId} = action.meta;
-            if (state.categoryAssetsFetching[categoryId] && state.categoryAssetsFetchRequestIds[categoryId] === requestId) {
-                state.categoryAssetsFetching[categoryId] = false;
-                state.categoryAssetsFetchErrors[categoryId] = action.payload || action.error.message;
-
-                action.asyncDispatch(enqueueSnackbar(
-                    {
-                        message: state.categoryAssetsFetchErrors[categoryId],
                         options: {
                             variant: 'error'
                         }
@@ -366,10 +289,7 @@ const categorySlice = createSlice({
                     return {
                         ...cat,
                         name: updatedCategory.name,
-                        categoryType: updatedCategory.categoryType,
-                        apiKey: updatedCategory.apiKey,
-                        apiKeySecret: updatedCategory.apiKeySecret,
-                        integrationService: updatedCategory.integrationService
+                        categoryType: updatedCategory.categoryType
                     };
                 });
 
@@ -454,7 +374,6 @@ const categorySlice = createSlice({
 const categoriesReducer = categorySlice.reducer;
 
 const fetchCategories = fetchCategoriesAsyncThunk;
-const fetchCategoriesAssets = fetchCategoryAssetsAsyncThunk;
 const createCategory = createCategoryAsyncThunk;
 const updateCategory = updateCategoryAsyncThunk;
 const deleteCategory = deleteCategoryAsyncThunk;
@@ -469,7 +388,7 @@ export {
     // reducer
     categoriesReducer,
     // apis
-    fetchCategories, fetchCategoriesAssets, createCategory, updateCategory, deleteCategory,
+    fetchCategories, createCategory, updateCategory, deleteCategory,
     // store actions
     addCategoryAsset, updateCategoryAsset, deleteCategoryAsset,
 };

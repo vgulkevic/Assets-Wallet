@@ -53,12 +53,6 @@ plan)
     tf_init
   fi
 
-  PARAM=$(terraform output -raw fx_api_key_parameter 2>/dev/null || echo "/asset-manager/$STAGE/fx-api-key")
-  if ! aws ssm get-parameter --name "$PARAM" --query Parameter.Name --output text >/dev/null 2>&1; then
-    echo "WARNING: SSM parameter $PARAM is missing; currency rates will fail until you create it:" >&2
-    echo "  aws ssm put-parameter --profile $PROFILE --region $REGION --type SecureString --name $PARAM --value <exchangerate.host key>" >&2
-  fi
-
   terraform plan -input=false -out=tfplan \
     -var "frontend_bucket_name=$FRONT_END_BUCKET_NAME" -var "profile=$PROFILE" -var "stage=$STAGE" -var "aws_region=$REGION"
   echo

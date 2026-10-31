@@ -1,5 +1,5 @@
 import Grid from "@mui/material/Grid";
-import React, {useEffect} from "react";
+import React, {useEffect, useMemo} from "react";
 import {makeStyles} from "tss-react/mui";
 import Container from "@mui/material/Container";
 import {CURRENCY_RATES_STORE_NAME, fetchCurrencyRates} from "./CurrencySelector/redux/currencyRatesSlice";
@@ -10,7 +10,10 @@ import CategoriesList from "./CategoriesList";
 import CurrencySelectorView from "./CurrencySelector/CurrencySelectorView";
 import usePrevious from "../utils/previousValue";
 import {isEqual} from "lodash";
+import {withSupportedCurrencies} from "../utils/currencies";
 import AddNewCategory from "./AddNewCategory/AddNewCategory";
+import LogOutButton from "./Authentication/LogOutButton";
+import Box from "@mui/material/Box";
 
 const useStyles = makeStyles()((theme) => ({
     root: {
@@ -23,7 +26,8 @@ const useStyles = makeStyles()((theme) => ({
 export default function Assets() {
     const {classes} = useStyles();
     const {entity: currencyRates, loading: currencyRatesLoading} = useSelector(state => state[CURRENCY_RATES_STORE_NAME]);
-    const {entity: selectedCurrencies} = useSelector(state => state[SELECTED_CURRENCIES_STORE_NAME]);
+    const {entity: savedCurrencies} = useSelector(state => state[SELECTED_CURRENCIES_STORE_NAME]);
+    const selectedCurrencies = useMemo(() => withSupportedCurrencies(savedCurrencies), [savedCurrencies]);
     const previousSelectedCurrencies = usePrevious(selectedCurrencies);
 
     const dispatch = useDispatch();
@@ -41,7 +45,10 @@ export default function Assets() {
     return (
         <div className={classes.root}>
             <Container maxWidth="lg">
-                <Grid sx={{alignItems: "center", justifyContent: "center"}} container style={{paddingTop: "100px", paddingBottom: "100px"}}>
+                <Box sx={{display: "flex", justifyContent: "flex-end", pt: 3, color: "text.secondary"}}>
+                    <LogOutButton/>
+                </Box>
+                <Grid sx={{alignItems: "center", justifyContent: "center"}} container style={{paddingTop: "40px", paddingBottom: "100px"}}>
                     <Grid size={12}>
                         {
                             (!currencyRates && currencyRatesLoading) || !selectedCurrencies || !currencyRates

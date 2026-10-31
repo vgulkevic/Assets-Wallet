@@ -4,15 +4,7 @@ If you store your money in multiple banks, BTC exchanges and in cash it is extre
 
 This app allows you track your holdings/assets value in different currencies in a single place.
 
-There are two different Categories - Custom and Api Integration:
-- Custom - you can add/edit/remove asset to this category as you want
-- Api Integration - your assets will be fetched from the service you use using your API key. 
-
-Available integrations: 
-   - Starling Bank
-   - Bittrex (BTC exchange)
-   - Kraken (BTC exchange)
-   - Binance (BTC exchange)
+Group your assets into categories and add, edit or remove them as you like. Totals are shown in your main and secondary currency (GBP, USD or EUR), using daily ECB reference rates from [Frankfurter](https://frankfurter.dev).
    
 ## Demo
 ![](asset_manager_demo.gif)
@@ -30,7 +22,7 @@ Serverless backend includes:
 - DynamoDB for storing the data
 - Cognito authentication for lambdas and for accessing front-end
 - API gateway endpoints with AWS proxy integration and Cognito authoriser
-- Lambdas to fetch categories and assets from DynamoDB and to fetch assets from API integrated categories
+- Lambdas to manage categories and assets in DynamoDB and to fetch currency rates
 
 Front-end
 - Two-page React.js app with Amplify authentication: 
@@ -70,17 +62,15 @@ Follow the steps to:
         - ```terraform init && terraform apply``` to create the state bucket (state locking uses S3 lock files, no DynamoDB table needed)
 
 2. Set your BACKEND properties and `frontend_bucket_name` in `gradle.properties` (or in `~/.gradle/gradle.properties` to keep them out of git).
-3. Store your [exchangerate.host](https://exchangerate.host) API key in SSM Parameter Store (used by the currency rates Lambda):
-    ```aws ssm put-parameter --profile <your_profile> --region <region> --type SecureString --name /asset-manager/<stage>/fx-api-key --value <key>```
-4. Deploy the backend infrastructure with Gradle:
+3. Deploy the backend infrastructure with Gradle:
     1. `asset_manager > backend > category-api > Tasks > other > plan` packages the Lambdas and layer and writes `terraform/tfplan`. **Read the plan output** before continuing.
     2. `asset_manager > backend > category-api > Tasks > other > apply` applies exactly that plan.
 
     DynamoDB tables and the Cognito user pool have `prevent_destroy` and deletion protection, so a plan that would delete them fails instead.
-5. Deploy the frontend: `asset_manager > backend > category-api > Tasks > other > deployFrontend` builds it with the API url and Cognito ids from terraform outputs, uploads it to S3 and invalidates CloudFront.
-6. Use AWS CLI to create your user:
+4. Deploy the frontend: `asset_manager > backend > category-api > Tasks > other > deployFrontend` builds it with the API url and Cognito ids from terraform outputs, uploads it to S3 and invalidates CloudFront.
+5. Use AWS CLI to create your user:
     ```aws cognito-idp --profile <your_profile> admin-create-user --user-pool-id <your_user_pool_id> --username <username> --temporary-password <temp_pass_for_first_login> --message-action SUPPRESS```
-7. Open the `frontend_url` printed by `terraform output` and log in.
+6. Open the `frontend_url` printed by `terraform output` and log in.
 
 ### Local development
 

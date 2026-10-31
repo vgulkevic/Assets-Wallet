@@ -1,21 +1,10 @@
-import {SSMClient, GetParameterCommand} from '@aws-sdk/client-ssm';
-
-const ssm = new SSMClient({});
+// Exchange rates from Frankfurter (ECB reference rates, no API key): https://frankfurter.dev
+const SUPPORTED_CURRENCIES = ["GBP", "USD", "EUR"];
 const CORS_HEADERS = {
   "Access-Control-Allow-Headers" : "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Authorization",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "OPTIONS,POST,GET,DELETE"
 };
-
-let fxApiKey;
-
-async function getFxApiKey() {
-  if (!fxApiKey) {
-    const res = await ssm.send(new GetParameterCommand({Name: process.env.FX_API_KEY_PARAMETER, WithDecryption: true}));
-    fxApiKey = res.Parameter.Value;
-  }
-  return fxApiKey;
-}
 
 export const handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
@@ -23,13 +12,22 @@ export const handler = async (event) => {
   }
 
   try {
-    const source = encodeURIComponent(JSON.parse(event.body).baseCurrency);
-    const apiKey = await getFxApiKey();
-    // exchangerate.host only serves plain http on the free plan
-    const res = await fetch(`http://api.exchangerate.host/live?access_key=${apiKey}&currencies=GBP,USD,EUR&source=${source}`);
-    const apiResponse = await res.json();
+    const source = JSON.parse(event.body).baseCurrency;
+    if (!SUPPORTED_CURRENCIES.includes(source)) {
+      return {statusCode: 400, body: JSON.stringify(`Unsupported currency: ${source}`), headers: CORS_HEADERS};
+    }
 
-    return {statusCode: 200, body: JSON.stringify(apiResponse), headers: CORS_HEADERS};
+    const symbols = SUPPORTED_CURRENCIES.filter(c => c !== source).join(",");
+    const res = await fetch(`https://api.frankfurter.dev/v1/latest?base=${source}&symbols=${symbols}`);
+    if (!res.ok) {
+      throw new Error(`Frankfurter responded with ${res.status}`);
+    }
+    const {date, rates} = await res.json();
+
+    // keep the response shape the frontend's currency converter expects: {source, quotes: {GBPUSD: 1.27, ...}}
+    const quotes = Object.fromEntries(Object.entries(rates).map(([currency, rate]) => [source + currency, rate]));
+
+    return {statusCode: 200, body: JSON.stringify({success: true, source, date, quotes}), headers: CORS_HEADERS};
   } catch (e) {
     console.log(e);
     return {statusCode: 500, body: JSON.stringify("Error calling the external API"), headers: CORS_HEADERS};

@@ -17,8 +17,6 @@ import Typography from "@mui/material/Typography";
 import DeleteIcon from '@mui/icons-material/Delete';
 import ConfirmationDialog from "../ConfirmationDialog";
 import {CATEGORIES_STORE_NAME, deleteCategory, updateCategory} from "./redux/categoriesSlice";
-import {API_CATEGORY, AVAILABLE_SERVICE_INTEGRATIONS, BINANCE_API_INTEGRATION, BITTREX_API_INTEGRATION, CUSTOM_CATEGORY, KRAKEN_API_INTEGRATION, STARLING_BANK_API_INTEGRATION} from "./CategoryType";
-import SelectWithOneChoosableOption from "../Input/SelectWithOneChoosableOption";
 
 export default function CategoryEditDialog({open, handleClose, category}) {
     const theme = useTheme();
@@ -31,41 +29,21 @@ export default function CategoryEditDialog({open, handleClose, category}) {
     const [showValidation, setShowValidation] = useState(false);
     const [inProgress, setInProgress] = useState(false);
     const [name, setName] = useState('');
-    const [categoryType, setCategoryType] = useState('');
-
-    const [integrationService, setIntegrationService] = useState('');
-    const [apiKey, setApiKey] = useState('');
-    const [apiKeySecret, setApiKeySecret] = useState('');
 
     const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
 
     const validationRes = {
-        name: false,
-        categoryType: false,
-        apiKey: false,
-        apiKeySecret: false,
-        integrationService: false
+        name: false
     };
 
     useEffect(() => {
         if (!open) {
             setName('');
-            setCategoryType('');
-            setIntegrationService('');
-            setApiKey('');
-            setApiKeySecret('');
             setShowValidation(false);
             setInProgress(false);
         } else {
             if (category) {
                 setName(category.name);
-                setCategoryType(category.categoryType);
-
-                if (category.categoryType === API_CATEGORY) {
-                    setIntegrationService(category.integrationService);
-                    setApiKey(category.apiKey);
-                    setApiKeySecret(category.apiKeySecret);
-                }
             }
         }
     }, [open, category]);
@@ -77,17 +55,7 @@ export default function CategoryEditDialog({open, handleClose, category}) {
     }, [inProgress, updatingCategory, deletingCategory, handleClose]);
 
     const isFormValid = () => {
-        if (categoryType === CUSTOM_CATEGORY) {
-            return validationRes.name && validationRes.categoryType;
-        } else {
-            if (integrationService === STARLING_BANK_API_INTEGRATION) {
-                return validationRes.name && validationRes.categoryType && validationRes.apiKey && validationRes.integrationService;
-            }
-
-            if (integrationService === BITTREX_API_INTEGRATION || integrationService === KRAKEN_API_INTEGRATION || integrationService === BINANCE_API_INTEGRATION) {
-                return validationRes.name && validationRes.categoryType && validationRes.apiKey && validationRes.integrationService && validationRes.apiKeySecret;
-            }
-        }
+        return validationRes.name;
     };
 
     const handleSaveButtonClick = () => {
@@ -97,25 +65,12 @@ export default function CategoryEditDialog({open, handleClose, category}) {
         if (isFormValid()) {
             setInProgress(true);
 
-            let payload = {
-                id: category.id,
-                name: name,
-                categoryType: categoryType,
-                integrationService: integrationService
-            }
-
-            if (category.categoryType === API_CATEGORY) {
-                if (apiKey !== category.apiKey) {
-                    payload.apiKey = apiKey;
-                }
-
-                if (apiKeySecret !== category.apiKey) {
-                    payload.apiKeySecret = apiKeySecret;
-                }
-            }
-
             dispatch(updateCategory({
-                payload: payload
+                payload: {
+                    id: category.id,
+                    name: name,
+                    categoryType: category.categoryType
+                }
             }));
         }
     };
@@ -149,95 +104,6 @@ export default function CategoryEditDialog({open, handleClose, category}) {
                                              validationFailText={'Please enter a category\'s name'}/>
                         </Grid>
 
-                        {
-                            categoryType === CUSTOM_CATEGORY &&
-                            <Grid size={12}>
-                                <SelectWithOneChoosableOption label={"Category type"}
-                                                              id={'categoryType'}
-                                                              options={[
-                                                                  {
-                                                                      id: CUSTOM_CATEGORY,
-                                                                      name: "Custom category"
-                                                                  }
-                                                              ]}
-                                                              value={categoryType}
-                                                              validate={showValidation}
-                                                              validationRes={validationRes}
-                                                              setter={(val) => {
-                                                                  setCategoryType(val);
-                                                              }}
-                                                              disabled
-                                />
-                            </Grid>
-                        }
-
-                        {
-                            categoryType === API_CATEGORY &&
-                            <Grid size={12}>
-                                <SelectWithOneChoosableOption label={"Category type"}
-                                                              id={'categoryType'}
-                                                              options={[
-                                                                  {
-                                                                      id: API_CATEGORY,
-                                                                      name: "Service integration"
-                                                                  }
-                                                              ]}
-                                                              value={categoryType}
-                                                              validate={showValidation}
-                                                              validationRes={validationRes}
-                                                              setter={(val) => {
-                                                                  setCategoryType(val);
-                                                              }}
-                                                              disabled
-                                />
-                            </Grid>
-                        }
-
-                        {
-                            categoryType === API_CATEGORY && <>
-                                <Grid size={12}>
-                                    <SelectWithOneChoosableOption label={"Service"}
-                                                                  id={'integrationService'}
-                                                                  options={AVAILABLE_SERVICE_INTEGRATIONS}
-                                                                  value={integrationService}
-                                                                  validate={showValidation}
-                                                                  validationRes={validationRes}
-                                                                  setter={(val) => {
-                                                                      setIntegrationService(val);
-                                                                  }}
-                                    />
-                                </Grid>
-
-                                <Grid size={12}>
-                                    <SingleTextInput label="API key"
-                                                     id={'apiKey'}
-                                                     value={apiKey}
-                                                     setter={setApiKey}
-                                                     validate={showValidation}
-                                                     validationRes={validationRes}
-                                                     validationFailText={'Please enter an API key'}/>
-                                </Grid>
-
-                                {
-                                    (integrationService === BITTREX_API_INTEGRATION ||
-                                        integrationService === KRAKEN_API_INTEGRATION ||
-                                            integrationService === BINANCE_API_INTEGRATION
-                                    ) && <>
-
-                                        <Grid size={12}>
-                                            <SingleTextInput label="API key secret"
-                                                             id={'apiKeySecret'}
-                                                             value={apiKeySecret}
-                                                             setter={setApiKeySecret}
-                                                             validate={showValidation}
-                                                             validationRes={validationRes}
-                                                             validationFailText={'Please enter an API key secret'}/>
-                                        </Grid>
-
-                                        </>
-                                }
-                            </>
-                        }
 
                         <Grid size={12}>
                             <Typography component="span" variant="body1">

@@ -1,30 +1,10 @@
 import React from "react";
 import SelectWithOneChoosableOption from "./SelectWithOneChoosableOption";
+import {SUPPORTED_CURRENCIES} from "../../utils/currencies";
 
 export default function BaseCurrencyPicker({label, value, setter, loading, ...props}) {
 
-    const options = [
-        {
-            id: "GBP",
-            name: "£ (Pound)"
-        },
-        {
-            id: "USD",
-            name: "$ (Dollar)"
-        },
-        {
-            id: "EUR",
-            name: "€ (Euro)"
-        },
-        {
-            id: "JPY",
-            name: "¥ (Japanese yen)"
-        },
-        {
-            id: "AUD",
-            name: "$ (Australian dollar)"
-        }
-    ];
+    const options = SUPPORTED_CURRENCIES;
 
     return (
         <SelectWithOneChoosableOption label={label}

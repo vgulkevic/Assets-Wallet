@@ -1,6 +1,6 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import {enqueueSnackbar} from "../../Notifier/notifierSlice";
-import {confirmSignIn, getCurrentUser, signIn} from 'aws-amplify/auth';
+import {confirmSignIn, getCurrentUser, signIn, signOut} from 'aws-amplify/auth';
 import {addCaseReducers} from "../../../redux/utils/addCaseReducers";
 
 const AUTH_STORE_NAME = "AUTH_STORE_NAME";
@@ -47,6 +47,15 @@ const restoreSessionAsyncThunk = createAsyncThunk(
     }
 );
 
+const logoutAsyncThunk = createAsyncThunk(
+    "/auth/logout",
+    async () => {
+        await signOut();
+        // start from a clean page so no data from this session stays in the store
+        window.location.assign("/");
+    }
+);
+
 const authLoginSlice = createSlice({
     name: "authLogin",
     initialState: {
@@ -58,6 +67,17 @@ const authLoginSlice = createSlice({
         sessionRestored: false
     },
     extraReducers: addCaseReducers({
+        [logoutAsyncThunk.rejected]: (state, action) => {
+            action.asyncDispatch(enqueueSnackbar(
+                {
+                    message: action.error.message,
+                    options: {
+                        variant: 'error'
+                    }
+                }
+            ));
+        },
+
         [restoreSessionAsyncThunk.fulfilled]: (state, action) => {
             state.user = action.payload;
             state.sessionRestored = true;
@@ -137,5 +157,6 @@ const authReducer = authLoginSlice.reducer;
 const login = loginAsyncThunk;
 const changePass = changePassAsyncThunk
 const restoreSession = restoreSessionAsyncThunk;
+const logout = logoutAsyncThunk;
 
-export {AUTH_STORE_NAME, authReducer, login, changePass, restoreSession}
+export {AUTH_STORE_NAME, authReducer, login, changePass, restoreSession, logout}

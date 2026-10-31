@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm audit --omit=dev
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install layer dependencies
+        working-directory: backend/js-common/nodejs
+        run: npm ci --omit=dev && npm audit --omit=dev
+      - name: Load every lambda handler
+        env:
+          NODE_PATH: ${{ github.workspace }}/backend/js-common/nodejs/node_modules
+          AWS_REGION: eu-west-2
+        run: |
+          node -e "require('./backend/category-api/category-persistence-lambda/handler.js')"
+          node -e "require('./backend/category-api/user-profile-persistence-lambda/handler.js')"
+          node --input-type=module -e "await import('./backend/category-api/currency-rates-lambda/index.mjs')"
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/category-api/terraform
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+      - name: Create placeholder lambda packages (validate reads their hashes)
+        run: |
+          for d in ../category-persistence-lambda ../user-profile-persistence-lambda ../currency-rates-lambda ../../js-common; do
+            echo placeholder > "$d/placeholder.txt" && (cd "$d" && zip -q function.zip placeholder.txt)
+          done
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
