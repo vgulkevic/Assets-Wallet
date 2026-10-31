@@ -5,6 +5,8 @@ import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import {AUTH_STORE_NAME} from "../../Authentication/redux/authSlice";
 import {getHttpClient} from "../../../utils/axiosUtil";
 import {enqueueSnackbar} from "../../Notifier/notifierSlice";
+import {getIdToken} from "../../../utils/authToken";
+import {addCaseReducers} from "../../../redux/utils/addCaseReducers";
 
 const CATEGORIES_STORE_NAME = "CATEGORIES_STORE_NAME";
 
@@ -26,7 +28,7 @@ const fetchCategoriesAsyncThunk = createAsyncThunk(
             const res = await promise;
             return res;
         } else {
-            const authHeader = user ?  {"Authorization": user.signInUserSession.idToken.jwtToken} : {};
+            const authHeader = user ?  {"Authorization": await getIdToken()} : {};
 
             const res = await getHttpClient().get(BASE_API_URL + "/asset-manager/categories" + (arg || ""), {headers: authHeader});
 
@@ -61,7 +63,7 @@ const createCategoryAsyncThunk = createAsyncThunk(
             return res;
         } else {
             const authHeader = {
-                "Authorization": user.signInUserSession.idToken.jwtToken
+                "Authorization": await getIdToken()
             };
             console.log(arg.payload);
             const res = await getHttpClient().post(BASE_API_URL + "/asset-manager/create-category", arg.payload, {headers: authHeader});
@@ -88,7 +90,7 @@ const updateCategoryAsyncThunk = createAsyncThunk(
             return res;
         } else {
             const authHeader = {
-                "Authorization": user.signInUserSession.idToken.jwtToken
+                "Authorization": await getIdToken()
             };
             console.log(arg.payload);
             const res = await getHttpClient().post(BASE_API_URL + "/asset-manager/update-category", arg.payload, {headers: authHeader});
@@ -116,7 +118,7 @@ const deleteCategoryAsyncThunk = createAsyncThunk(
             return res;
         } else {
             const authHeader = {
-                "Authorization": user.signInUserSession.idToken.jwtToken
+                "Authorization": await getIdToken()
             };
 
             const res = await getHttpClient().delete(BASE_API_URL + "/asset-manager/delete-category", { data: arg, headers: authHeader });
@@ -138,7 +140,7 @@ const fetchCategoryAssetsAsyncThunk = createAsyncThunk(
             return;
         }
 
-        const authHeader = user ? {"Authorization": user.signInUserSession.idToken.jwtToken} : {};
+        const authHeader = user ? {"Authorization": await getIdToken()} : {};
 
         const res = await getHttpClient().get(BASE_API_URL + "/asset-manager/fetch-assets?categoryId=" + arg, {headers: authHeader});
 
@@ -209,7 +211,7 @@ const categorySlice = createSlice({
             }
         }
     },
-    extraReducers: {
+    extraReducers: addCaseReducers({
         // FETCH
         [fetchCategoriesAsyncThunk.pending]: (state, action) => {
             if (!state.fetching) {
@@ -445,7 +447,7 @@ const categorySlice = createSlice({
                 ));
             }
         }
-    }
+    })
 });
 
 

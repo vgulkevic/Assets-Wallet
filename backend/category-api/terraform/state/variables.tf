@@ -7,13 +7,9 @@ variable "aws_region" {
 }
 
 variable "profile" {
-  default = "private"
+  default = "default"
 }
 
 variable "bucket_name" {
   default = "asset-manager-terraform-remotestate-"
-}
-
-variable "lock_table_table" {
-  default = "asset-manager-terraform-locks-"
 }

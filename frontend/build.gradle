@@ -1,18 +1,13 @@
-task packFrontend(type: Exec) {
-    def stage = stage
-    def api_url = api_url
-    def region = aws_region
-    def userPoolId = userPoolId
-    def userPoolWebClientId = userPoolWebClientId
-
+// Local production build. To build and upload with config from terraform outputs use backend:category-api:deployFrontend
+tasks.register('packFrontend', Exec) {
     doFirst {
-        println "packing frontend to ${stage}.. api url=${api_url}"
+        println "packing frontend to ${project.findProperty('stage')}.."
     }
-    environment "REACT_APP_API_URL", "$api_url"
-    environment "REACT_APP_STAGE", "$stage"
-    environment "REACT_APP_REGION", "$region"
-    environment "REACT_APP_USER_POOL_ID", "$userPoolId"
-    environment "REACT_APP_USER_POOL_CLIENT_ID", "$userPoolWebClientId"
+    // only pass properties that are set, so values in frontend/.env.local are not overridden with blanks
+    [VITE_API_URL: 'api_url', VITE_STAGE: 'stage', VITE_REGION: 'aws_region',
+     VITE_USER_POOL_ID: 'userPoolId', VITE_USER_POOL_CLIENT_ID: 'userPoolWebClientId'].each { env, prop ->
+        if (project.findProperty(prop)) environment env, project.property(prop)
+    }
 
-    commandLine "npm", "run", "build"
+    commandLine 'npm', 'run', 'build'
 }

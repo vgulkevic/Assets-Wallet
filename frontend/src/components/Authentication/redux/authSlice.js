@@ -1,6 +1,7 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import {enqueueSnackbar} from "../../Notifier/notifierSlice";
-import {Auth} from 'aws-amplify';
+import {confirmSignIn, getCurrentUser, signIn} from 'aws-amplify/auth';
+import {addCaseReducers} from "../../../redux/utils/addCaseReducers";
 
 const AUTH_STORE_NAME = "AUTH_STORE_NAME";
 
@@ -14,9 +15,8 @@ const loginAsyncThunk = createAsyncThunk(
             return;
         }
         
-        const user = await Auth.signIn(arg.username, arg.password);
-        console.log(user);
-        return user;
+        const {nextStep} = await signIn({username: arg.username, password: arg.password});
+        return {username: arg.username, signInStep: nextStep.signInStep};
     }
 );
 
@@ -29,8 +29,21 @@ const changePassAsyncThunk = createAsyncThunk(
             return;
         }
 
-        const user = await Auth.completeNewPassword(arg.user, arg.password);
-        return user;
+        const {nextStep} = await confirmSignIn({challengeResponse: arg.password});
+        return {username: arg.user.username, signInStep: nextStep.signInStep};
+    }
+);
+
+// Amplify keeps the session in local storage, so a signed in user stays signed in after a reload
+const restoreSessionAsyncThunk = createAsyncThunk(
+    "/auth/restore-session",
+    async () => {
+        try {
+            const {username} = await getCurrentUser();
+            return {username, signInStep: "DONE"};
+        } catch (e) {
+            return null;
+        }
     }
 );
 
@@ -41,9 +54,15 @@ const authLoginSlice = createSlice({
         changePassRequired: false,
         loading: false,
         currentRequestId: null,
-        error: null
+        error: null,
+        sessionRestored: false
     },
-    extraReducers: {
+    extraReducers: addCaseReducers({
+        [restoreSessionAsyncThunk.fulfilled]: (state, action) => {
+            state.user = action.payload;
+            state.sessionRestored = true;
+        },
+
         [loginAsyncThunk.pending]: (state, action) => {
             if (!state.loading) {
                 state.loading = true;
@@ -55,10 +74,7 @@ const authLoginSlice = createSlice({
             const {requestId} = action.meta;
             if (state.loading && state.currentRequestId === requestId) {
                 state.user = action.payload;
-
-                if (state.user.challengeName === "NEW_PASSWORD_REQUIRED") {
-                    state.changePassRequired = true;
-                }
+                state.changePassRequired = action.payload.signInStep === "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED";
                 state.loading = false;
                 state.currentRequestId = null;
                 state.error = null;
@@ -114,11 +130,12 @@ const authLoginSlice = createSlice({
                 ));
             }
         }
-    }
+    })
 });
 
 const authReducer = authLoginSlice.reducer;
 const login = loginAsyncThunk;
 const changePass = changePassAsyncThunk
+const restoreSession = restoreSessionAsyncThunk;
 
-export {AUTH_STORE_NAME, authReducer, login, changePass}
+export {AUTH_STORE_NAME, authReducer, login, changePass, restoreSession}

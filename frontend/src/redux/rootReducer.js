@@ -1,4 +1,4 @@
-import {combineReducers} from "redux";
+import {combineReducers} from "@reduxjs/toolkit";
 import {NOTIFIER_STORE_NAME, notifierReducer} from "../components/Notifier/notifierSlice";
 import {CURRENCY_RATES_STORE_NAME, currencyRatesReducer} from "../components/CurrencySelector/redux/currencyRatesSlice";
 import {SELECTED_CURRENCIES_STORE_NAME, selectedCurrenciesReducer} from "../components/CurrencySelector/redux/selectedCurrenciesSlice";

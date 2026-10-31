@@ -3,8 +3,10 @@ import {enqueueSnackbar} from "../../components/Notifier/notifierSlice";
 import {getHttpClient} from "../../utils/axiosUtil";
 import {LOCAL} from "../../profile";
 import {AUTH_STORE_NAME} from "../../components/Authentication/redux/authSlice";
+import {getIdToken} from "../../utils/authToken";
+import {addCaseReducers} from "../../redux/utils/addCaseReducers";
 
-export function createGetUpdateEntitySlice(thunkType, rootReducerStorePropertyName, url, name, showSnackbarOnFailure, debugReturnPromise, createUpdateThunk, reducers, addAuthHeader) {
+export function createGetUpdateEntitySlice(thunkType, rootReducerStorePropertyName, url, name, showSnackbarOnFailure, debugReturnPromise, createUpdateThunk, reducers, addAuthHeader, usePost) {
     const getAsyncThunk = createAsyncThunk(
         thunkType + "/get",
         async (arg, thunkAPI) => {
@@ -22,10 +24,15 @@ export function createGetUpdateEntitySlice(thunkType, rootReducerStorePropertyNa
                 return res;
             } else {
                 const authHeader = (addAuthHeader && user) ?  {
-                    "Authorization": user.signInUserSession.idToken.jwtToken
+                    "Authorization": await getIdToken()
                 } : {};
 
-                const res = await getHttpClient().get(url + (arg || ""), {headers: authHeader});
+                let res;
+                if (usePost) {
+                    res = await getHttpClient().post(url, arg.payload, {headers: authHeader});
+                } else {
+                    res = await getHttpClient().get(url + (arg || ""), {headers: authHeader});
+                }
 
                 return res.data;
             }
@@ -90,7 +97,7 @@ export function createGetUpdateEntitySlice(thunkType, rootReducerStorePropertyNa
                     return res;
                 } else {
                     const authHeader = (addAuthHeader && user) ?  {
-                        "Authorization": user.signInUserSession.idToken.jwtToken
+                        "Authorization": await getIdToken()
                     } : {};
 
                     const res = await getHttpClient().post(url + arg.urlParam || "", arg.payload, {headers: authHeader});
@@ -160,9 +167,7 @@ export function createGetUpdateEntitySlice(thunkType, rootReducerStorePropertyNa
             currentUpdateRequestId: null,
             entityUpdateError: null
         },
-        extraReducers: {
-            ...extraReducers
-        },
+        extraReducers: addCaseReducers(extraReducers),
         reducers: {
             ...(reducers || {})
         }

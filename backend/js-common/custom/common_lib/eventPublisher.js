@@ -1,7 +1,7 @@
 'use strict';
 
-const {SNS} = require('aws-sdk');
-const sns = new SNS();
+const {SNSClient, PublishCommand} = require('@aws-sdk/client-sns');
+const sns = new SNSClient({});
 
 class EventPublisher {
   topicArn;
@@ -25,11 +25,11 @@ class EventPublisher {
       default: JSON.stringify(message),
     };
 
-    return sns.publish({
+    return sns.send(new PublishCommand({
       Message: JSON.stringify(payload),
       MessageStructure: 'json',
       TopicArn: this.topicArn,
-    }).promise();
+    }));
   }
 }
 

@@ -55,7 +55,8 @@ jspm_packages
 function.zip
 layer.zip
 .terraform
-terraform.tfstate
+*.tfstate
+*.tfstate.*.backup
 
 # Serverless directories
 .serverless
@@ -63,3 +64,12 @@ terraform.tfstate
 
 !intuit-service/node_modules
 !prospect-service/node_modules
+
+# terraform plan files and local overrides
+tfplan
+*_override.tf
+.terraform.lock.hcl.bak
+
+# IDE project files
+.idea/
+**/.idea/

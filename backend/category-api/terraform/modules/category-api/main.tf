@@ -86,7 +86,7 @@ module "get_categories_lambda" {
   function_name  = "${var.service_prefix}-get-categories-handler-${var.stage}"
   handler        = "handler.getCategoriesHandler"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 
@@ -108,7 +108,7 @@ module "create_category_lambda" {
   function_name  = "${var.service_prefix}-create-category-handler-${var.stage}"
   handler        = "handler.createCategoryHandler"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 
@@ -130,7 +130,7 @@ module "update_category_lambda" {
   function_name  = "${var.service_prefix}-update-category-handler-${var.stage}"
   handler        = "handler.updateCategoryHandler"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 
@@ -152,7 +152,7 @@ module "delete_category_lambda" {
   function_name  = "${var.service_prefix}-delete-category-handler-${var.stage}"
   handler        = "handler.deleteCategoryHandler"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 
@@ -258,7 +258,7 @@ module "fetch_category_assets_lambda" {
   function_name  = "${var.service_prefix}-fetch-category-assets-handler-${var.stage}"
   handler        = "handler.fetchCategoryAssetsHandler"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 
@@ -280,7 +280,7 @@ module "create_category_asset_lambda" {
   function_name  = "${var.service_prefix}-create-category-asset-handler-${var.stage}"
   handler        = "handler.createCategoryAssetHandler"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 
@@ -302,7 +302,7 @@ module "update_category_asset_lambda" {
   function_name  = "${var.service_prefix}-update-category-asset-handler-${var.stage}"
   handler        = "handler.updateCategoryAssetHandler"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 
@@ -324,7 +324,7 @@ module "delete_category_asset_lambda" {
   function_name  = "${var.service_prefix}-delete-category-asset-handler-${var.stage}"
   handler        = "handler.deleteCategoryAssetHandler"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 
@@ -338,24 +338,6 @@ module "delete_category_asset_lambda" {
 }
 ### ASSETS END
 
-
-module "api_gateway_deployment" {
-  source      = "../../../../../terraform-common/modules/api_deployment"
-  rest_api_id = var.rest_api_id
-  stage       = var.stage
-
-  endpoints = [
-    module.get_custom_categories_endpoint.integration_id,
-    module.create_category_endpoint.integration_id,
-    module.update_custom_category_endpoint.integration_id,
-    module.delete_custom_category_endpoint.integration_id,
-
-    module.fetch_category_assets_endpoint.integration_id,
-    module.create_asset_endpoint.integration_id,
-    module.update_asset_endpoint.integration_id,
-    module.delete_asset_endpoint.integration_id
-  ]
-}
 
 module "categories_table" {
   source          = "../../../../../terraform-common/modules/dynamodb"

@@ -1,6 +1,6 @@
-import {makeStyles} from "@material-ui/core/styles";
+import {makeStyles} from "tss-react/mui";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   content: {
     flexGrow: 1,
     height: '100vh',

@@ -1,7 +1,7 @@
 'use strict';
 
-const {SSM} = require('aws-sdk');
-const ssm = new SSM();
+const {SSMClient, GetParameterCommand, PutParameterCommand} = require('@aws-sdk/client-ssm');
+const ssm = new SSMClient({});
 
 class ParameterStore {
 
@@ -9,7 +9,7 @@ class ParameterStore {
    * Put parameter into SSM
    * @param {string} key
    * @param {string} value
-   * @returns {Promise<PromiseResult<SSM.PutParameterResult, AWSError>>}
+   * @returns {Promise<import('@aws-sdk/client-ssm').PutParameterCommandOutput>}
    */
   async put(key, value) {
     const params = {
@@ -19,13 +19,13 @@ class ParameterStore {
       Overwrite: true
     };
 
-    return ssm.putParameter(params).promise();
+    return ssm.send(new PutParameterCommand(params));
   }
 
   /**
    * Get parameter from SSM
    * @param {string} key
-   * @returns {Promise<PromiseResult<unknown, unknown>>}
+   * @returns {Promise<import('@aws-sdk/client-ssm').GetParameterCommandOutput>}
    */
   async get(key) {
     const params = {
@@ -33,7 +33,7 @@ class ParameterStore {
       WithDecryption: true
     };
 
-    return ssm.getParameter(params).promise();
+    return ssm.send(new GetParameterCommand(params));
   }
 
   /**

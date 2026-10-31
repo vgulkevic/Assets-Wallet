@@ -5,6 +5,8 @@ import {updateCategoryAsset as updateAsset, deleteCategoryAsset as deleteAsset, 
 import {BASE_API_URL, LOCAL} from "../../../../profile";
 import {randomIntFromInterval} from "../../../../utils/randomNumber";
 import {AUTH_STORE_NAME} from "../../../Authentication/redux/authSlice";
+import {getIdToken} from "../../../../utils/authToken";
+import {addCaseReducers} from "../../../../redux/utils/addCaseReducers";
 
 const CUSTOM_CATEGORY_ASSET_STORE_NAME = "CUSTOM_CATEGORY_ASSET_STORE_NAME";
 
@@ -31,7 +33,7 @@ const createCategoryAssetAsyncThunk = createAsyncThunk(
             return res;
         } else {
             const authHeader = user ?  {
-                "Authorization": user.signInUserSession.idToken.jwtToken
+                "Authorization": await getIdToken()
             } : {};
 
             const res = await getHttpClient().post(BASE_API_URL + "/asset-manager/create-asset", arg.payload, {headers: authHeader});
@@ -59,7 +61,7 @@ const updateCategoryAssetAsyncThunk = createAsyncThunk(
             return res;
         } else {
             const authHeader = user ?  {
-                "Authorization": user.signInUserSession.idToken.jwtToken
+                "Authorization": await getIdToken()
             } : {};
 
             const res = await getHttpClient().post(BASE_API_URL + "/asset-manager/update-asset", arg.payload, {headers: authHeader});
@@ -87,7 +89,7 @@ const deleteCategoryAssetAsyncThunk = createAsyncThunk(
             return res;
         } else {
             const authHeader = user ?  {
-                "Authorization": user.signInUserSession.idToken.jwtToken
+                "Authorization": await getIdToken()
             } : {};
 
             const res = await getHttpClient().delete(BASE_API_URL + "/asset-manager/delete-asset", { data: arg, headers: authHeader });
@@ -112,7 +114,7 @@ const customCategoryAssetSlice = createSlice({
         currentDeleteRequestId: null,
         deleteError: null
     },
-    extraReducers: {
+    extraReducers: addCaseReducers({
         // CREATE
         [createCategoryAssetAsyncThunk.pending]: (state, action) => {
             if (!state.creating) {
@@ -244,7 +246,7 @@ const customCategoryAssetSlice = createSlice({
                 ));
             }
         }
-    }
+    })
 });
 
 const customCategoryAssetReducer = customCategoryAssetSlice.reducer;

@@ -1,47 +1,38 @@
-// put this in your 'backend' module
-// each subproject will contain a lambda so the below script will automatically resolve its path.
-// if you want your lambdas to share same source you can simply remove 'subprojects'
+// each subproject contains a lambda; the layer in backend:js-common provides its node modules
 
 subprojects {
-    task install(type: Exec) {
-        doFirst {
-            println "installing node modules.."
-            exec {
-                // remove any dev dependencies installed locally before deploying
-                commandLine "npm", "prune", "--production"
-            }
-        }
-        commandLine "npm", "install", "--production"
-    }
-    task packageLambda(type: Exec, dependsOn: install) {
+    tasks.register('packageLambda', Exec) {
         doFirst {
             println "packaging $project.name.."
         }
-        commandLine "zip", "-9", "-FS", "-r", "function.zip", "."
+        commandLine 'zip', '-9', '-FS', '-r', 'function.zip', '.', '-x', 'function.zip', '-x', '.idea/*'
     }
 }
 
-task deploy(type: Exec, dependsOn: subprojects.tasks['packageLambda']) {
-    def profile = aws_profile
-    def stage = stage
-    def aws_region = aws_region
+def deployTask(String action) {
+    def stage = project.property('stage')
+    return ['bash', '../../terraform-common/deploy.sh',
+            '-a', action,
+            '-p', project.property('aws_profile'),
+            '-b', "${project.property('tf_bucket')}${stage}",
+            '-k', project.property('tf_bucket_key'),
+            '-s', stage,
+            '-f', "${project.property('frontend_bucket_name')}${stage}",
+            '-r', project.property('aws_region')]
+}
 
-    def tf_bucket = "${tf_bucket}${stage}"
-    def tf_bucket_key = tf_bucket_key
-    def tf_locks_table = "${tf_locks_table}${stage}"
+// 1. plan: package everything and write terraform/tfplan. Read the output before applying!
+tasks.register('plan', Exec) {
+    dependsOn subprojects.collect { "${it.path}:packageLambda" }, ':backend:js-common:packageLayer'
+    commandLine deployTask('plan')
+}
 
-    def frontend_bucket_name = "${frontend_bucket_name}${stage}"
+// 2. apply: apply exactly the plan reviewed in step 1
+tasks.register('apply', Exec) {
+    commandLine deployTask('apply')
+}
 
-    doFirst {
-        println "testong properties :"
-        println "deploying to ${stage}.."
-    }
-    commandLine "bash", "../../terraform-common/deploy.sh",
-            "-p", "$profile",
-            "-b", "$tf_bucket",
-            "-k", "$tf_bucket_key",
-            "-d", "$tf_locks_table",
-            "-s", "$stage",
-            "-f", "$frontend_bucket_name",
-            "-r", "$aws_region"
+// 3. deployFrontend: build the frontend from terraform outputs and upload it
+tasks.register('deployFrontend', Exec) {
+    commandLine deployTask('frontend')
 }

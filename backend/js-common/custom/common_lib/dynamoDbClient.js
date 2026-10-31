@@ -1,7 +1,11 @@
 'use strict';
 
-const {DynamoDB} = require('aws-sdk');
-const docClient = new DynamoDB.DocumentClient();
+const {DynamoDBClient} = require('@aws-sdk/client-dynamodb');
+const {DynamoDBDocument} = require('@aws-sdk/lib-dynamodb');
+// removeUndefinedValues keeps the AWS SDK v2 DocumentClient behaviour of silently dropping undefined attributes
+const docClient = DynamoDBDocument.from(new DynamoDBClient({}), {
+  marshallOptions: {removeUndefinedValues: true}
+});
 
 class DynamoDbClient {
   TableName;
@@ -34,7 +38,7 @@ class DynamoDbClient {
     };
 
     try {
-      const res = await docClient.get(_params).promise();
+      const res = await docClient.get(_params);
       return res.Item;
     } catch (error) {
       console.log(`Dynamodb 'get' error`);
@@ -55,7 +59,7 @@ class DynamoDbClient {
     };
 
     try {
-      return await docClient.put(_params).promise();
+      return await docClient.put(_params);
     } catch (error) {
       console.log(`Dynamodb 'put' - error`);
       logError(error, _params);
@@ -78,7 +82,7 @@ class DynamoDbClient {
     };
 
     try {
-      return await docClient.update(_params).promise();
+      return await docClient.update(_params);
     } catch (error) {
       console.log(`Dynamodb 'update' error`);
       logError(error, _params);
@@ -100,7 +104,7 @@ class DynamoDbClient {
     };
 
     try {
-      return await docClient.query(_params).promise();
+      return await docClient.query(_params);
     } catch (error) {
       console.log(`Dynamodb 'query' error`);
       logError(error, _params)
@@ -116,7 +120,7 @@ class DynamoDbClient {
    */
   async scan(params) {
     try {
-      return await docClient.scan(params).promise();
+      return await docClient.scan(params);
     } catch (error) {
       console.log(`Dynamodb 'scan' error`);
       logError(error, params);
@@ -135,7 +139,7 @@ class DynamoDbClient {
     };
 
     try {
-      return await docClient.delete(_params).promise();
+      return await docClient.delete(_params);
     } catch (error) {
       console.log(`Dynamodb 'delete' error`);
       logError(error, _params);
@@ -157,7 +161,7 @@ class DynamoDbClient {
       try {
         await docClient.transactWrite({
           TransactItems: batch
-        }).promise();
+        });
       } catch (error) {
         console.log(`Dynamodb 'transactUpdate' error`);
         logError(error, params);

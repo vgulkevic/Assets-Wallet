@@ -36,17 +36,6 @@ module "update_user_profile" {
   authorization_type              = "COGNITO_USER_POOLS"
 }
 
-module "api_gateway_deployment" {
-  source      = "../../../../../terraform-common/modules/api_deployment"
-  rest_api_id = var.rest_api_id
-  stage       = var.stage
-
-  endpoints = [
-    module.get_user_profile_endpoint.integration_id,
-    module.update_user_profile.integration_id
-  ]
-}
-
 module "get_user_profile_lambda" {
   source         = "../../../../../terraform-common/modules/api_gateway_lambda"
   service_prefix = var.service_prefix
@@ -56,7 +45,7 @@ module "get_user_profile_lambda" {
   function_name  = "${var.service_prefix}-get-user-profile-handler-${var.stage}"
   handler        = "handler.getUserProfile"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 
@@ -78,7 +67,7 @@ module "set_user_profile_lambda" {
   function_name  = "${var.service_prefix}-set-user-profile-handler-${var.stage}"
   handler        = "handler.setUserProfile"
   memory_size    = 128
-  runtime        = "nodejs12.x"
+  runtime        = "nodejs24.x"
   layers         = var.layers
   rest_api_id    = var.rest_api_id
 

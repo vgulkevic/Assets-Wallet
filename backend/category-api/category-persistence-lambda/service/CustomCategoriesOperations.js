@@ -2,12 +2,12 @@
 
 const {DynamoDbClient} = require('custom_common_lib');
 const db = DynamoDbClient.of(process.env.CUSTOM_CATEGORIES_TABLE);
-const {v4: uuidv4} = require('uuid');
+const {randomUUID} = require('crypto');
 
 class CustomCategoriesOperations {
 
   static async createCustomCategory(category, userId) {
-    const uid = uuidv4();
+    const uid = randomUUID();
     const name = category.name;
 
     const res = await db.put({
@@ -62,7 +62,7 @@ class CustomCategoriesOperations {
     console.log(userId);
     console.log(asset);
 
-    const assetUid = uuidv4();
+    const assetUid = randomUUID();
 
     const res = await db.update({
       Key: {

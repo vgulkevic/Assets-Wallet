@@ -1,11 +1,11 @@
-import {createMuiTheme} from "@material-ui/core/styles";
-import responsiveFontSizes from "@material-ui/core/styles/responsiveFontSizes";
-import blue from '@material-ui/core/colors/blue';
-import red from "@material-ui/core/colors/red";
-import {green} from "@material-ui/core/colors";
+import {createTheme} from "@mui/material/styles";
+import {responsiveFontSizes as responsiveFontSizes} from "@mui/material/styles";
+import {blue as blue} from "@mui/material/colors";
+import {red as red} from "@mui/material/colors";
+import {green} from "@mui/material/colors";
 
 
-let theme = createMuiTheme({
+let theme = createTheme({
     palette: {
         primary: blue,
         green: green[400],

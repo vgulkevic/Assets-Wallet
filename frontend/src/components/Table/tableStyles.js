@@ -1,15 +1,16 @@
-import {makeStyles} from "@material-ui/core/styles";
-import {darken} from "@material-ui/core";
+import {makeStyles} from "tss-react/mui";
+import {darken} from "@mui/material";
 
-const useStyles = makeStyles(theme => ({
+// tss-react passes the generated class names as the third argument, replacing JSS "$rule" references
+const useStyles = makeStyles()((theme, _params, classes) => ({
   rowHover : {},
   rowGrey: {},
   rowWhite: {},
   table: {
     border: "none",
     "& tbody":{
-      "& $rowGrey": {backgroundColor: "rgba(236, 236, 236, .5)"},
-      "& $rowHover, $rowWhite": {
+      [`& .${classes.rowGrey}`]: {backgroundColor: "rgba(236, 236, 236, .5)"},
+      [`& .${classes.rowHover}, & .${classes.rowWhite}`]: {
         position: "relative",
         transition: "all .3s ease-in-out",
         "&:hover": {
@@ -34,7 +35,7 @@ const useStyles = makeStyles(theme => ({
     left: 240,
     backgroundColor: theme.palette.common.white,
     boxShadow: "0px 2px 20px rgba(68, 72, 79, 0.1)",
-    [theme.breakpoints.down("xs")]: {
+    [theme.breakpoints.down("sm")]: {
       left: 0,
     },
   },
@@ -50,7 +51,7 @@ const useStyles = makeStyles(theme => ({
     "&:hover": {
       color: "rgba(0, 0, 0, 0.87)",
     },
-    "& $icon": {
+    [`& .${classes.icon}`]: {
       opacity: 1,
     },
   },
@@ -60,30 +61,6 @@ const useStyles = makeStyles(theme => ({
     flex: 1,
     justifyContent: "flex-end",
     marginLeft: theme.spacing(2.5),
-  },
-  paginat: {
-    listStyle: "none",
-    display: "flex",
-    alignItems: "center",
-    padding: 0,
-    margin: 0,
-  },
-  pageItem: {
-    cursor: "pointer",
-    textAlign: "center",
-    borderRadius: "50%",
-    margin: theme.spacing(0, .5),
-    "& a": {
-      lineHeight: "initial",
-      padding: theme.spacing(1, .9),
-      "&:focus": {
-        outline: "none",
-      },
-    }
-  },
-  active: {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.common.white,
   }
 }));
 

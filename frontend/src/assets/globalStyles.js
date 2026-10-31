@@ -1,6 +1,6 @@
-import makeStyles from "@material-ui/core/styles/makeStyles";
+import {makeStyles} from "tss-react/mui";
 
-const useGlobalStyles = makeStyles(theme => ({
+const useGlobalStyles = makeStyles()(theme => ({
     success: {
         borderRadius: 0,
     },

@@ -2,7 +2,6 @@
 
 const {DynamoDbClient} = require('custom_common_lib');
 const db = DynamoDbClient.of(process.env.CUSTOM_CATEGORIES_TABLE);
-const {v4: uuidv4} = require('uuid');
 
 class CategoriesOperations {
   static async getCategories(userId) {

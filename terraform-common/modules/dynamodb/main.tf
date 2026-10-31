@@ -8,6 +8,17 @@ resource "aws_dynamodb_table" "dynamodb-table" {
   range_key    = var.sort_key
   billing_mode = "PAY_PER_REQUEST"
 
+  # these tables hold user data: never let Terraform (or anyone) drop them
+  deletion_protection_enabled = true
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
   dynamic "attribute" {
     for_each = var.attributes
 

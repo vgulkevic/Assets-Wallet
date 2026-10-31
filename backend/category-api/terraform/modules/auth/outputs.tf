@@ -21,3 +21,7 @@ output "api_request_validator_id" {
 output "authorizer_id" {
   value = module.cognito_authorizer.authorizer_id
 }
+
+output "client_id" {
+  value = aws_cognito_user_pool_client.client.id
+}

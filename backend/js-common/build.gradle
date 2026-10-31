@@ -1,18 +1,16 @@
-subprojects {
-    task install(type: Exec) {
-        doFirst {
-            println "installing node modules.."
-            exec {
-                // remove any dev dependencies installed locally before deploying
-                commandLine "npm", "prune", "--production"
-            }
-        }
-        commandLine "npm", "install", "--production"
+tasks.register('install', Exec) {
+    doFirst {
+        println "installing node modules.."
     }
+    workingDir 'nodejs'
+    // clean install of production dependencies only, exactly as pinned in package-lock.json
+    commandLine 'npm', 'ci', '--omit=dev'
 }
-task packageLayer(type: Exec, dependsOn: subprojects.tasks['install']) {
+
+tasks.register('packageLayer', Exec) {
+    dependsOn 'install'
     doFirst {
         println "packaging $project.name.."
     }
-    commandLine "zip", "-9", "-FS", "-r", "function.zip", "nodejs"
+    commandLine 'zip', '-9', '-FS', '-r', 'function.zip', 'nodejs'
 }

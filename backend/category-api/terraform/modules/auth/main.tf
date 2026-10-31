@@ -3,11 +3,23 @@ resource "aws_cognito_user_pool" "pool" {
   admin_create_user_config {
     allow_admin_create_user_only = true
   }
+
+  # replacing the pool would delete every user account
+  deletion_protection = "ACTIVE"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_cognito_user_pool_client" "client" {
   name = "asset-manager-userPool-client-${var.stage}"
   user_pool_id = aws_cognito_user_pool.pool.id
+
+  # the client id is baked into the frontend build
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 module "api_gateway" {

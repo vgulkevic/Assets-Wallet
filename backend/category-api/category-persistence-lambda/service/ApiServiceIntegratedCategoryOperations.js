@@ -2,7 +2,7 @@
 
 const {DynamoDbClient} = require('custom_common_lib');
 const db = DynamoDbClient.of(process.env.CUSTOM_CATEGORIES_TABLE);
-const {v4: uuidv4} = require('uuid');
+const {randomUUID} = require('crypto');
 const {StarlingBankIntegrationOperations} = require('./StarlingBankIntegrationOperations.js');
 const {BittrexIntegrationOperations} = require('./BittrexIntegrationOperations.js');
 const {KrakenIntegrationOperations} = require('./KrakenIntegrationOperations.js');
@@ -24,7 +24,7 @@ class ApiServiceIntegratedCategoryOperations {
   }
 
   static async createApiIntegratedCategory(category, userId) {
-    const uid = uuidv4();
+    const uid = randomUUID();
     const name = category.name;
 
     const res = await db.put({

@@ -42,14 +42,15 @@ Where you can add/edit/delete categories and custom categories assets.
 ### Prerequisites
 
 - AWS account
-- Terraform (I use v0.12.20)
-- npm
-- AWS CLI
+- Terraform >= 1.10
+- Node.js >= 22 (Lambdas run on `nodejs24.x`)
+- Java >= 17 (for the Gradle wrapper)
+- AWS CLI v2
 
 Using macOS terminal
 ```
-brew install terraform
-brew install node
+brew install hashicorp/tap/terraform
+brew install node awscli
 ```
 
 ### Installing
@@ -61,36 +62,34 @@ Follow the steps to:
 
 <br/><br/>
 
-1. Set up your terraform state bucket and table for locks:
-    
+1. Set up your terraform state bucket:
+
     - Go to `/backend/category-api/terraform/state/variables.tf` and change the default variables (or specify them when running `terraform apply` in the next step)
     - Use terminal from the root of the project to run:
         - ```cd ./backend/category-api/terraform/state```
-        - ```terraform apply``` to create state bucket and table for terraform locks
-        
-2. Set your BACKEND properties in `gradle.properties` in the root of the project with your properties.
-3. Use Gradle to deploy your infra:
-    1. `asset_manager > backend > Tasks > other > packageLayer`
-    2. `asset_manager > backend > Tasks > other > packageLambda`
-    3. `asset_manager > backend > Tasks > other > deploy` 
-4. Update your FRONTEND properties in `gradle.properties` in the root of the project
-    1. Go to your AWS account (double-check you are in the correct AWS region) and verify an API Gateway has been created. 
-    2. Open your API
-    3. Go to Stages > select <stage> and copy the Invoke Url - this is your `api_url` in `gradle.properties`
-    4. Go to AWS > Cognito > Manage User Pools > select your user pool
-    5. Copy the Pool Id - this is your `userPoolId`
-    6. Go to App clients > find the newly created user pool - App client id is your `userPoolWebClientId` 
-7. Install and deploy your frontend:
-    1. Use terminal from the root of the project to run: 
-        - ```cd ./frontend```
-        - ```yarn install```
-    2. Use Gradle to deploy your frontend:
-        - `asset_manager > frontend > Tasks > other > packFrontend`
-        - `asset_manager > backend > Tasks > other > deploy`
-8. Use AWS CLI to create your user:
+        - ```terraform init && terraform apply``` to create the state bucket (state locking uses S3 lock files, no DynamoDB table needed)
+
+2. Set your BACKEND properties and `frontend_bucket_name` in `gradle.properties` (or in `~/.gradle/gradle.properties` to keep them out of git).
+3. Store your [exchangerate.host](https://exchangerate.host) API key in SSM Parameter Store (used by the currency rates Lambda):
+    ```aws ssm put-parameter --profile <your_profile> --region <region> --type SecureString --name /asset-manager/<stage>/fx-api-key --value <key>```
+4. Deploy the backend infrastructure with Gradle:
+    1. `asset_manager > backend > category-api > Tasks > other > plan` packages the Lambdas and layer and writes `terraform/tfplan`. **Read the plan output** before continuing.
+    2. `asset_manager > backend > category-api > Tasks > other > apply` applies exactly that plan.
+
+    DynamoDB tables and the Cognito user pool have `prevent_destroy` and deletion protection, so a plan that would delete them fails instead.
+5. Deploy the frontend: `asset_manager > backend > category-api > Tasks > other > deployFrontend` builds it with the API url and Cognito ids from terraform outputs, uploads it to S3 and invalidates CloudFront.
+6. Use AWS CLI to create your user:
     ```aws cognito-idp --profile <your_profile> admin-create-user --user-pool-id <your_user_pool_id> --username <username> --temporary-password <temp_pass_for_first_login> --message-action SUPPRESS```
-9. Go to your AWS account > Cloudfront and find domain name for your bucket
-10. Open the url and login
+7. Open the `frontend_url` printed by `terraform output` and log in.
+
+### Local development
+
+```
+cd ./frontend
+cp .env.example .env.local   # fill in values from `terraform output`
+npm install
+npm start
+```
 
 ## Authors
 

@@ -4,16 +4,10 @@
   "description": "Shared code",
   "private": true,
   "author": "vladc",
-  "devDependencies": {
-    "aws-sdk": "^2.7.0"
-  },
   "dependencies": {
-    "@types/node": "^13.13.5",
-    "axios": "^0.19.2",
-    "uuid": "^8.1.0",
-    "dinero.js": "^1.8.1",
-    "crypto": "^1.0.1",
-    "qs": "^6.9.4",
-    "custom_common_lib": "../custom/common_lib"
+    "axios": "^1.21.0",
+    "custom_common_lib": "file:../custom/common_lib",
+    "dinero.js": "^1.9.1",
+    "qs": "^6.17.1"
   }
 }
