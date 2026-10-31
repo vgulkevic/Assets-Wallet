@@ -1,40 +1,34 @@
-import React, {useEffect} from 'react';
-import {useDispatch} from "react-redux";
-import Main from "./components/Main";
-import theme from "./utils/theme";
-import {ThemeProvider} from '@mui/material/styles';
-import {styled} from "@mui/material/styles";
-import {MaterialDesignContent, SnackbarProvider} from "notistack";
-import configureAmplify from "./components/Authentication/AmplifyConfig";
-import {restoreSession} from "./components/Authentication/redux/authSlice";
-import {CssBaseline} from "@mui/material";
+import React, {lazy, Suspense, useEffect} from "react";
+import {useDispatch, useSelector} from "react-redux";
+import configureAmplify from "./auth/amplifyConfig";
+import {restoreSession, selectAuth} from "./auth/authSlice";
+import LoginPage from "./auth/LoginPage";
+import FullPageSpinner from "./common/FullPageSpinner";
 
-// square snackbars, as in the original design
-const SquareSnackbar = styled(MaterialDesignContent)({
-    '&.notistack-MuiContent': {
-        borderRadius: 0,
-    },
-});
+// loaded only after sign in, which keeps the login page small
+const DashboardPage = lazy(() => import("./dashboard/DashboardPage"));
 
 configureAmplify();
 
-function App() {
+export default function App() {
     const dispatch = useDispatch();
+    const {user, changePassRequired, sessionRestored} = useSelector(selectAuth);
 
     useEffect(() => {
         dispatch(restoreSession());
     }, [dispatch]);
 
+    if (!sessionRestored) {
+        return <FullPageSpinner/>;
+    }
+
+    if (!user || changePassRequired) {
+        return <LoginPage/>;
+    }
+
     return (
-        <ThemeProvider theme={theme}>
-            <SnackbarProvider maxSnack={5}
-                              anchorOrigin={{vertical: 'top', horizontal: 'right'}}
-                              Components={{success: SquareSnackbar, error: SquareSnackbar}}>
-                <CssBaseline/>
-                <Main/>
-            </SnackbarProvider>
-        </ThemeProvider>
+        <Suspense fallback={<FullPageSpinner/>}>
+            <DashboardPage/>
+        </Suspense>
     );
 }
-
-export default App;

@@ -25,11 +25,9 @@ Serverless backend includes:
 - Lambdas to manage categories and assets in DynamoDB and to fetch currency rates
 
 Front-end
-- Two-page React.js app with Amplify authentication: 
-    1. Login page 
-    2. Categories page
-    
-Where you can add/edit/delete categories and custom categories assets.
+- React app (Vite, MUI, Redux Toolkit Query) with Amplify authentication:
+    1. Login page
+    2. Dashboard with your net worth, categories and assets, in light or dark mode and on mobile
 
 ### Prerequisites
 
@@ -76,8 +74,14 @@ Follow the steps to:
 
 ```
 cd ./frontend
-cp .env.example .env.local   # fill in values from `terraform output`
 npm install
+npm run start:mock           # no AWS needed: in-memory mock API, any username/password signs in
+```
+
+To run against your deployed backend instead:
+
+```
+cp .env.example .env.local   # fill in values from `terraform output`
 npm start
 ```
 

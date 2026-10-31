@@ -16,11 +16,6 @@ export default [
         },
         rules: {
             "no-unused-vars": ["warn", {varsIgnorePattern: "^React$"}],
-            "no-useless-assignment": "warn",
-            // React Compiler rules flag patterns that predate the upgrade; revisit them when refreshing the UI
-            "react-hooks/set-state-in-effect": "warn",
-            "react-hooks/immutability": "warn",
-            "react-hooks/refs": "warn",
         },
     },
 ];

@@ -2,21 +2,21 @@
 const SUPPORTED_CURRENCIES = [
     {
         id: "GBP",
-        name: "£ (Pound)"
+        name: "£ Pound"
     },
     {
         id: "USD",
-        name: "$ (Dollar)"
+        name: "$ Dollar"
     },
     {
         id: "EUR",
-        name: "€ (Euro)"
+        name: "€ Euro"
     }
 ];
 
 const DEFAULT_SELECTED_CURRENCIES = {main: "GBP", secondary: "USD"};
 
-const isSupportedCurrency = (currency) => SUPPORTED_CURRENCIES.some(option => option.id === currency);
+export const isSupportedCurrency = (currency) => SUPPORTED_CURRENCIES.some(option => option.id === currency);
 
 // A saved profile may still use a currency that is no longer offered (e.g. JPY); fall back to the defaults for those.
 // The stored profile only changes when the user presses Save.

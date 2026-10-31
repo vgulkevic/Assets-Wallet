@@ -1,20 +1,22 @@
-import React from 'react';
-import {createRoot} from 'react-dom/client';
-import App from './App';
-
-import {configureStore} from "@reduxjs/toolkit";
+import React from "react";
+import {createRoot} from "react-dom/client";
 import {Provider} from "react-redux";
-import rootReducer from "./redux/rootReducer";
-import asyncDispatchMiddleware from "./redux/middleware/asyncDispatchMiddleware";
+import {ThemeProvider} from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import {SnackbarProvider} from "notistack";
+import App from "./App";
+import {store} from "./store";
+import theme from "./theme";
 
-const store = configureStore({
-    reducer: rootReducer,
-    // asyncDispatchMiddleware attaches a function to every action, so the serializability check would flag all of them
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware({serializableCheck: false}).concat(asyncDispatchMiddleware)
-});
-
-createRoot(document.getElementById('root')).render(
-    <Provider store={store}>
-        <App/>
-    </Provider>
+createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+        <Provider store={store}>
+            <ThemeProvider theme={theme} defaultMode="system">
+                <CssBaseline enableColorScheme/>
+                <SnackbarProvider maxSnack={4} autoHideDuration={4000} anchorOrigin={{vertical: "bottom", horizontal: "center"}}>
+                    <App/>
+                </SnackbarProvider>
+            </ThemeProvider>
+        </Provider>
+    </React.StrictMode>
 );

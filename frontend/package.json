@@ -9,21 +9,17 @@
     "@mui/material": "^9.5.0",
     "@reduxjs/toolkit": "^2.13.0",
     "aws-amplify": "^6.22.2",
-    "axios": "^1.21.0",
-    "lodash": "^4.18.1",
     "notistack": "^3.0.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-loader-spinner": "^8.0.2",
-    "react-redux": "^9.3.1",
-    "react-router": "^8.5.1",
-    "tss-react": "^4.9.21"
+    "react-redux": "^9.3.1"
   },
   "scripts": {
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "start:mock": "vite --mode mock"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

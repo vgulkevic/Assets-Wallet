@@ -1,4 +1,4 @@
-// Mock API responses used when VITE_STAGE=local (see .env.example)
+// Mock data served by src/api/mockBaseQuery.js when VITE_STAGE=local (see .env.example)
 const data = {
     categories: [
         {
@@ -34,29 +34,24 @@ const data = {
                 {
                     id: "6",
                     name: "Dollar account",
-                    amount: "800",
+                    amount: "800.50",
                     currency: "USD"
                 }
             ]
         }
     ],
 
-    // same shape as the currency-rates endpoint
-    cachedRates: {
-        success: true,
-        source: "GBP",
-        date: "2026-10-30",
-        quotes: {
-            GBPEUR: 1.1993,
-            GBPUSD: 1.3399
-        }
+    // 1 GBP in other currencies
+    gbpRates: {
+        EUR: 1.1993,
+        USD: 1.3399
     },
+    ratesDate: "2026-10-30",
 
     selectedCurrencies: {
         main: "GBP",
         secondary: "USD"
     }
-
 };
 
 export {data};
