@@ -13,8 +13,17 @@ import SummaryCard from "./SummaryCard";
 import CategoryCard from "./CategoryCard";
 import CategoryDialog from "./CategoryDialog";
 import useDashboardData from "./useDashboardData";
+import {BalancesVisibilityProvider} from "./balancesVisibility";
 
 export default function DashboardPage() {
+    return (
+        <BalancesVisibilityProvider>
+            <Dashboard/>
+        </BalancesVisibilityProvider>
+    );
+}
+
+function Dashboard() {
     const {currencies, categories, totals, ratesDate, isLoading, isError, retry} = useDashboardData();
     const [addingCategory, setAddingCategory] = useState(false);
 

@@ -25,7 +25,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {useDeleteCategoryMutation} from "../api/assetManagerApi";
-import {formatMoney} from "../utils/money";
+import {useBalancesVisibility} from "./balancesVisibility";
 import ConfirmDialog from "../common/ConfirmDialog";
 import AssetDialog from "./AssetDialog";
 import CategoryDialog from "./CategoryDialog";
@@ -53,6 +53,7 @@ function useSortedAssets(assets) {
 }
 
 export default function CategoryCard({category, currencies}) {
+    const {format} = useBalancesVisibility();
     const isPhone = useMediaQuery((theme) => theme.breakpoints.down("sm"));
     const [sortedAssets, sort, toggleSort] = useSortedAssets(category.assets);
     // NEW_ASSET, an asset being edited, or null
@@ -83,8 +84,8 @@ export default function CategoryCard({category, currencies}) {
                     </Typography>
                 </Box>
                 <Box sx={{textAlign: "right", fontVariantNumeric: "tabular-nums"}}>
-                    <Typography sx={{fontWeight: 700}}>{formatMoney(category.totalInMain, currencies.main)}</Typography>
-                    <Typography variant="body2" color="text.secondary">{formatMoney(category.totalInSecondary, currencies.secondary)}</Typography>
+                    <Typography sx={{fontWeight: 700}}>{format(category.totalInMain, currencies.main)}</Typography>
+                    <Typography variant="body2" color="text.secondary">{format(category.totalInSecondary, currencies.secondary)}</Typography>
                 </Box>
                 <IconButton aria-label={`Actions for ${category.name}`} onClick={(e) => setMenuAnchor(e.currentTarget)}>
                     <MoreVertIcon/>
@@ -131,8 +132,10 @@ export default function CategoryCard({category, currencies}) {
 }
 
 function AssetTable({assets, currencies, sort, onSort, onSelect}) {
+    const {format} = useBalancesVisibility();
     const columns = [
-        {id: "name", label: "Name", width: "34%"},
+        // no width: the name column takes whatever the others leave
+        {id: "name", label: "Name"},
         {id: "holding", label: "Holding", align: "right", width: "22%"},
         {id: "amountInMain", label: currencies.main, align: "right", sortable: true, width: "20%"},
         {id: "amountInSecondary", label: currencies.secondary, align: "right", sortable: true, width: "20%"}
@@ -142,8 +145,10 @@ function AssetTable({assets, currencies, sort, onSort, onSelect}) {
         // fixed layout so the columns line up across all category cards
         <Table size="small" sx={{
             tableLayout: "fixed",
+            // long names and amounts get "…"
             "& td, & th": {px: 3, overflow: "hidden", textOverflow: "ellipsis"},
-            "& .MuiTableCell-paddingCheckbox": {px: 1}
+            // ...but not the edit-icon column
+            "& .edit-cell": {width: 64, px: 1, textAlign: "center", overflow: "visible", textOverflow: "clip"}
         }}>
             <TableHead>
                 <TableRow>
@@ -154,17 +159,17 @@ function AssetTable({assets, currencies, sort, onSort, onSelect}) {
                                                   onClick={() => onSort(column.id)}>{column.label}</TableSortLabel>
                                 : column.label}
                         </TableCell>)}
-                    <TableCell padding="checkbox" width={56}/>
+                    <TableCell className="edit-cell"/>
                 </TableRow>
             </TableHead>
             <TableBody>
                 {assets.map((asset) =>
                     <TableRow key={asset.id} hover onClick={() => onSelect(asset)} sx={{cursor: "pointer", "&:last-child td": {border: 0}}}>
                         <TableCell sx={{whiteSpace: "nowrap"}} title={asset.name}>{asset.name}</TableCell>
-                        <TableCell align="right" sx={{color: "text.secondary"}}>{formatMoney(parseFloat(asset.amount), asset.currency)}</TableCell>
-                        <TableCell align="right">{formatMoney(asset.amountInMain, currencies.main)}</TableCell>
-                        <TableCell align="right">{formatMoney(asset.amountInSecondary, currencies.secondary)}</TableCell>
-                        <TableCell padding="checkbox">
+                        <TableCell align="right" sx={{color: "text.secondary"}}>{format(parseFloat(asset.amount), asset.currency)}</TableCell>
+                        <TableCell align="right">{format(asset.amountInMain, currencies.main)}</TableCell>
+                        <TableCell align="right">{format(asset.amountInSecondary, currencies.secondary)}</TableCell>
+                        <TableCell className="edit-cell">
                             <IconButton size="small" aria-label={`Edit ${asset.name}`}>
                                 <EditOutlinedIcon fontSize="small"/>
                             </IconButton>
@@ -176,14 +181,15 @@ function AssetTable({assets, currencies, sort, onSort, onSelect}) {
 }
 
 function AssetList({assets, currencies, onSelect}) {
+    const {format} = useBalancesVisibility();
     return (
         <List disablePadding>
             {assets.map((asset) =>
                 <ListItemButton key={asset.id} onClick={() => onSelect(asset)} divider>
-                    <ListItemText primary={asset.name} secondary={formatMoney(parseFloat(asset.amount), asset.currency)}/>
+                    <ListItemText primary={asset.name} secondary={format(parseFloat(asset.amount), asset.currency)}/>
                     <Box sx={{textAlign: "right", fontVariantNumeric: "tabular-nums", ml: 2}}>
-                        <Typography variant="body2" sx={{fontWeight: 600}}>{formatMoney(asset.amountInMain, currencies.main)}</Typography>
-                        <Typography variant="caption" color="text.secondary">{formatMoney(asset.amountInSecondary, currencies.secondary)}</Typography>
+                        <Typography variant="body2" sx={{fontWeight: 600}}>{format(asset.amountInMain, currencies.main)}</Typography>
+                        <Typography variant="caption" color="text.secondary">{format(asset.amountInSecondary, currencies.secondary)}</Typography>
                     </Box>
                 </ListItemButton>)}
         </List>
