@@ -3,6 +3,8 @@
 const {ApiGatewayUtils} = require('custom_common_lib');
 const {CategoriesOperations} = require('./service/CategoriesOperations.js');
 const {CustomCategoriesOperations} = require('./service/CustomCategoriesOperations.js');
+const {AssetHistoryOperations} = require('./service/AssetHistoryOperations.js');
+const {NetWorthOperations} = require('./service/NetWorthOperations.js');
 
 module.exports.getCategoriesHandler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
@@ -88,10 +90,9 @@ module.exports.deleteCategoryHandler = async (event) => {
   }
   console.log(JSON.stringify(event));
   try {
-    const res = await CategoriesOperations.deleteCategory(event.body, event.requestContext.authorizer.claims.sub);
-    const {CategoryUid} = {...res.Attributes};
+    const deletedId = await CategoriesOperations.deleteCategory(event.body, event.requestContext.authorizer.claims.sub);
 
-    return ApiGatewayUtils.successResponse(CategoryUid);
+    return deletedId ? ApiGatewayUtils.successResponse(deletedId) : ApiGatewayUtils.notFound();
   } catch (e) {
     console.log(JSON.stringify(e));
     return ApiGatewayUtils.internalError('Internal Error');
@@ -139,8 +140,8 @@ module.exports.updateCategoryAssetHandler = async (event) => {
     const res = await CustomCategoriesOperations.updateCategoryAsset(request.categoryId, event.requestContext.authorizer.claims.sub, request.asset);
     const {CategoryUid, Asset} = {...res};
 
-    if (!CategoryUid && !Asset) {
-      return ApiGatewayUtils.badRequest();
+    if (!res) {
+      return ApiGatewayUtils.notFound();
     } else {
       return ApiGatewayUtils.successResponse({
         categoryId: CategoryUid,
@@ -167,13 +168,7 @@ module.exports.deleteCategoryAssetHandler = async (event) => {
   try {
     const request = JSON.parse(event.body);
 
-    const res = await CustomCategoriesOperations.deleteCategoryAsset(request.categoryId, event.requestContext.authorizer.claims.sub, request.assetId);
-
-    console.log("delete returned");
-    console.log(JSON.stringify(res));
-    const {Assets} = {...res.Attributes};
-
-    const deletedAsset = Assets[request.assetId];
+    const deletedAsset = await CustomCategoriesOperations.deleteCategoryAsset(request.categoryId, event.requestContext.authorizer.claims.sub, request.assetId);
 
     if (deletedAsset) {
       return ApiGatewayUtils.successResponse({
@@ -188,4 +183,106 @@ module.exports.deleteCategoryAssetHandler = async (event) => {
     console.log(JSON.stringify(e));
     return ApiGatewayUtils.internalError('Internal Error');
   }
+}
+
+// GET ?assetId=... : every recorded change of an asset, oldest first
+module.exports.getAssetHistoryHandler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return ApiGatewayUtils.successResponse();
+  }
+
+  try {
+    const assetId = event.queryStringParameters && event.queryStringParameters.assetId;
+    if (!assetId) {
+      return ApiGatewayUtils.badRequest();
+    }
+
+    return ApiGatewayUtils.successResponse(await AssetHistoryOperations.getAssetHistory(event.requestContext.authorizer.claims.sub, assetId));
+  } catch (e) {
+    console.log(e);
+    return ApiGatewayUtils.internalError('Internal Error');
+  }
+}
+
+// POST {changeId, excluded}: leave a wrong change out of (or back in) the asset's chart
+module.exports.setAssetChangeExcludedHandler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return ApiGatewayUtils.successResponse();
+  }
+
+  try {
+    const {changeId, excluded} = JSON.parse(event.body);
+    if (!changeId || typeof excluded !== 'boolean') {
+      return ApiGatewayUtils.badRequest();
+    }
+
+    return ApiGatewayUtils.successResponse(await AssetHistoryOperations.setExcluded(event.requestContext.authorizer.claims.sub, changeId, excluded));
+  } catch (e) {
+    console.log(e);
+    return e.name === 'ConditionalCheckFailedException' ? ApiGatewayUtils.notFound() : ApiGatewayUtils.internalError('Internal Error');
+  }
+}
+
+// POST {categoryIds: [...]}
+module.exports.reorderCategoriesHandler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return ApiGatewayUtils.successResponse();
+  }
+
+  try {
+    const {categoryIds} = JSON.parse(event.body);
+    if (!Array.isArray(categoryIds)) {
+      return ApiGatewayUtils.badRequest();
+    }
+
+    await CategoriesOperations.reorderCategories(event.requestContext.authorizer.claims.sub, categoryIds);
+    return ApiGatewayUtils.successResponse(categoryIds);
+  } catch (e) {
+    console.log(e);
+    return ApiGatewayUtils.internalError('Internal Error');
+  }
+}
+
+// POST {categoryId, assetIds: [...]}
+module.exports.reorderAssetsHandler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return ApiGatewayUtils.successResponse();
+  }
+
+  try {
+    const {categoryId, assetIds} = JSON.parse(event.body);
+    if (!categoryId || !Array.isArray(assetIds)) {
+      return ApiGatewayUtils.badRequest();
+    }
+
+    await CustomCategoriesOperations.reorderAssets(categoryId, event.requestContext.authorizer.claims.sub, assetIds);
+    return ApiGatewayUtils.successResponse({categoryId, assetIds});
+  } catch (e) {
+    console.log(e);
+    return ApiGatewayUtils.internalError('Internal Error');
+  }
+}
+
+// GET: the user's net worth over time
+module.exports.getNetWorthHistoryHandler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return ApiGatewayUtils.successResponse();
+  }
+
+  try {
+    return ApiGatewayUtils.successResponse(await NetWorthOperations.getHistory(event.requestContext.authorizer.claims.sub));
+  } catch (e) {
+    console.log(e);
+    return ApiGatewayUtils.internalError('Internal Error');
+  }
+}
+
+// Scheduled nightly by EventBridge
+module.exports.snapshotNetWorthHandler = async () => {
+  const result = await NetWorthOperations.snapshotAll();
+  console.log(JSON.stringify(result));
+  if (result.failed > 0) {
+    throw new Error(`${result.failed} snapshot(s) failed`);
+  }
+  return result;
 }

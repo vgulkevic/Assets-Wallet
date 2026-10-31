@@ -21,7 +21,7 @@ export default function LoginPage() {
                     <Stack spacing={1} sx={{alignItems: "center", mb: 3}}>
                         <AccountBalanceWalletOutlinedIcon color="primary" sx={{fontSize: 44}}/>
                         <Typography variant="h5" component="h1" sx={{fontWeight: 700}}>Assets Wallet</Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" color="textSecondary">
                             {changePassRequired ? "Choose a new password to finish signing in" : "Sign in to see your assets"}
                         </Typography>
                     </Stack>

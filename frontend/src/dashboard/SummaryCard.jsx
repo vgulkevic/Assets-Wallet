@@ -34,7 +34,7 @@ export default function SummaryCard({currencies, totals, categoryCount, ratesDat
                 <Stack direction={{xs: "column", md: "row"}} spacing={3} sx={{justifyContent: "space-between", alignItems: {md: "flex-end"}}}>
                     <div>
                         <Stack direction="row" spacing={0.5} sx={{alignItems: "center"}}>
-                            <Typography variant="overline" color="text.secondary">Net worth</Typography>
+                            <Typography variant="overline" color="textSecondary">Net worth</Typography>
                             <Tooltip title={hidden ? "Show balances" : "Hide balances"}>
                                 <IconButton size="small" onClick={toggle} aria-label={hidden ? "Show balances" : "Hide balances"} aria-pressed={hidden}>
                                     {hidden ? <VisibilityOffOutlinedIcon fontSize="small"/> : <VisibilityOutlinedIcon fontSize="small"/>}
@@ -45,10 +45,10 @@ export default function SummaryCard({currencies, totals, categoryCount, ratesDat
                             <Typography variant="h4" component="p" sx={{fontVariantNumeric: "tabular-nums"}}>
                                 {format(totals.main, currencies.main)}
                             </Typography>
-                            <Typography variant="h6" component="p" color="text.secondary" sx={{fontWeight: 500, fontVariantNumeric: "tabular-nums"}}>
+                            <Typography variant="h6" component="p" color="textSecondary" sx={{fontWeight: 500, fontVariantNumeric: "tabular-nums"}}>
                                 {format(totals.secondary, currencies.secondary)}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>
+                            <Typography variant="body2" color="textSecondary" sx={{mt: 1}}>
                                 {totals.assetCount} {totals.assetCount === 1 ? "asset" : "assets"} in {categoryCount} {categoryCount === 1 ? "category" : "categories"}
                                 {ratesDate && ` · ECB rates of ${ratesDateFormat.format(new Date(ratesDate))}`}
                             </Typography>

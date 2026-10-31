@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import {enqueueSnackbar} from "notistack";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -7,12 +8,15 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import {useCreateAssetMutation, useDeleteAssetMutation, useUpdateAssetMutation} from "../api/assetManagerApi";
 import {isSupportedCurrency, SUPPORTED_CURRENCIES} from "../utils/currencies";
 import ConfirmDialog from "../common/ConfirmDialog";
+import AssetHistoryPanel from "./AssetHistoryPanel";
 
 const isValidAmount = (value) => /^-?\d+(\.\d+)?$/.test(value.trim());
 
@@ -26,6 +30,7 @@ export default function AssetDialog({categoryId, asset, defaultCurrency, onClose
     const [currency, setCurrency] = useState(asset && isSupportedCurrency(asset.currency) ? asset.currency : defaultCurrency);
     const [submitted, setSubmitted] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [tab, setTab] = useState("details");
 
     const [createAsset, {isLoading: creating}] = useCreateAssetMutation();
     const [updateAsset, {isLoading: updating}] = useUpdateAssetMutation();
@@ -67,11 +72,17 @@ export default function AssetDialog({categoryId, asset, defaultCurrency, onClose
 
     return (
         <>
-            <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="xs"
+            <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth={isEdit ? "sm" : "xs"}
                     slotProps={{paper: {component: "form", onSubmit: save, noValidate: true}}}>
-                <DialogTitle>{isEdit ? "Edit asset" : "Add asset"}</DialogTitle>
-                <DialogContent>
-                    <Stack spacing={2} sx={{pt: 1}}>
+                <DialogTitle sx={isEdit ? {pb: 0} : undefined}>{isEdit ? asset.name : "Add asset"}</DialogTitle>
+                {isEdit &&
+                    <Tabs value={tab} onChange={(e, value) => setTab(value)} sx={{px: 3, borderBottom: 1, borderColor: "divider"}}>
+                        <Tab value="details" label="Details"/>
+                        <Tab value="history" label="History"/>
+                    </Tabs>}
+                <DialogContent sx={isEdit ? {minHeight: 320} : undefined}>
+                    {tab === "history" && <Box sx={{pt: 2}}><AssetHistoryPanel assetId={asset.id}/></Box>}
+                    <Stack spacing={2} sx={{pt: isEdit ? 3 : 1, display: tab === "details" ? undefined : "none"}}>
                         <TextField label="Name" autoFocus fullWidth value={name} onChange={(e) => setName(e.target.value)}
                                    error={nameError} helperText={nameError ? "Enter a name" : " "}/>
                         <Stack direction="row" spacing={1.5}>
@@ -84,7 +95,7 @@ export default function AssetDialog({categoryId, asset, defaultCurrency, onClose
                             </TextField>
                         </Stack>
                         {asset && !isSupportedCurrency(asset.currency) &&
-                            <Typography variant="caption" color="warning.main">
+                            <Typography variant="caption" sx={{color: "warning.main"}}>
                                 This asset was saved in {asset.currency}, which is no longer offered. Pick a currency to save it.
                             </Typography>}
                     </Stack>
@@ -92,7 +103,7 @@ export default function AssetDialog({categoryId, asset, defaultCurrency, onClose
                 <DialogActions sx={{px: 3, pb: 2}}>
                     {isEdit && <Button color="error" onClick={() => setConfirmDelete(true)} sx={{mr: "auto"}}>Delete</Button>}
                     <Button onClick={onClose}>Cancel</Button>
-                    <Button type="submit" variant="contained" loading={creating || updating}>Save</Button>
+                    <Button type="submit" variant="contained" loading={creating || updating} disabled={tab !== "details"}>Save</Button>
                 </DialogActions>
             </Dialog>
 

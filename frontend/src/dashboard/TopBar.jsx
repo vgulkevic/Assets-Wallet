@@ -53,7 +53,7 @@ export default function TopBar() {
                 <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}
                       anchorOrigin={{vertical: "bottom", horizontal: "right"}} transformOrigin={{vertical: "top", horizontal: "right"}}>
                     <Box sx={{px: 2, py: 1}}>
-                        <Typography variant="caption" color="text.secondary">Signed in as</Typography>
+                        <Typography variant="caption" color="textSecondary">Signed in as</Typography>
                         <Typography variant="body2" sx={{fontWeight: 600}}>{user?.username}</Typography>
                     </Box>
                     <Divider/>

@@ -18,7 +18,7 @@ const apiBaseQuery = fetchBaseQuery({
 export const assetManagerApi = createApi({
     reducerPath: "assetManagerApi",
     baseQuery: LOCAL ? mockBaseQuery : apiBaseQuery,
-    tagTypes: ["Categories", "Profile"],
+    tagTypes: ["Categories", "Profile", "AssetHistory", "NetWorth"],
     endpoints: (build) => ({
         getCategories: build.query({
             query: () => "categories",
@@ -38,17 +38,73 @@ export const assetManagerApi = createApi({
             invalidatesTags: ["Categories"]
         }),
 
+        reorderCategories: build.mutation({
+            query: (categoryIds) => ({url: "reorder-categories", method: "POST", body: {categoryIds}}),
+            // move the cards straight away; put them back if saving fails
+            async onQueryStarted(categoryIds, {dispatch, queryFulfilled}) {
+                const patch = dispatch(assetManagerApi.util.updateQueryData("getCategories", undefined,
+                    (categories) => orderBy(categories, categoryIds)));
+                try {
+                    await queryFulfilled;
+                } catch {
+                    patch.undo();
+                }
+            }
+        }),
+
         createAsset: build.mutation({
             query: ({categoryId, asset}) => ({url: "create-asset", method: "POST", body: {categoryId, asset}}),
             invalidatesTags: ["Categories"]
         }),
         updateAsset: build.mutation({
             query: ({categoryId, asset}) => ({url: "update-asset", method: "POST", body: {categoryId, asset}}),
-            invalidatesTags: ["Categories"]
+            invalidatesTags: (result, error, {asset}) => ["Categories", {type: "AssetHistory", id: asset.id}]
         }),
         deleteAsset: build.mutation({
             query: ({categoryId, assetId}) => ({url: "delete-asset", method: "DELETE", body: {categoryId, assetId}}),
-            invalidatesTags: ["Categories"]
+            invalidatesTags: (result, error, {assetId}) => ["Categories", {type: "AssetHistory", id: assetId}]
+        }),
+        reorderAssets: build.mutation({
+            query: ({categoryId, assetIds}) => ({url: "reorder-assets", method: "POST", body: {categoryId, assetIds}}),
+            async onQueryStarted({categoryId, assetIds}, {dispatch, queryFulfilled}) {
+                const patch = dispatch(assetManagerApi.util.updateQueryData("getCategories", undefined, (categories) => {
+                    const category = categories.find((c) => c.id === categoryId);
+                    if (category) {
+                        category.assets = orderBy(category.assets, assetIds);
+                    }
+                }));
+                try {
+                    await queryFulfilled;
+                } catch {
+                    patch.undo();
+                }
+            }
+        }),
+
+        getAssetHistory: build.query({
+            query: (assetId) => `asset-history?assetId=${encodeURIComponent(assetId)}`,
+            providesTags: (result, error, assetId) => [{type: "AssetHistory", id: assetId}]
+        }),
+        setAssetChangeExcluded: build.mutation({
+            query: ({changeId, excluded}) => ({url: "set-asset-change-excluded", method: "POST", body: {changeId, excluded}}),
+            async onQueryStarted({assetId, changeId, excluded}, {dispatch, queryFulfilled}) {
+                const patch = dispatch(assetManagerApi.util.updateQueryData("getAssetHistory", assetId, (changes) => {
+                    const change = changes.find((c) => c.id === changeId);
+                    if (change) {
+                        change.excluded = excluded;
+                    }
+                }));
+                try {
+                    await queryFulfilled;
+                } catch {
+                    patch.undo();
+                }
+            }
+        }),
+
+        getNetWorthHistory: build.query({
+            query: () => "net-worth-history",
+            providesTags: ["NetWorth"]
         }),
 
         getUserProfile: build.query({
@@ -75,11 +131,22 @@ export const assetManagerApi = createApi({
     })
 });
 
+// items in the order of `ids`; anything not listed keeps its place after them
+function orderBy(items, ids) {
+    const position = new Map(ids.map((id, i) => [id, i]));
+    return [...items].sort((a, b) => (position.get(a.id) ?? Infinity) - (position.get(b.id) ?? Infinity));
+}
+
 export const {
     useGetCategoriesQuery,
     useCreateCategoryMutation,
     useRenameCategoryMutation,
     useDeleteCategoryMutation,
+    useReorderCategoriesMutation,
+    useReorderAssetsMutation,
+    useGetAssetHistoryQuery,
+    useSetAssetChangeExcludedMutation,
+    useGetNetWorthHistoryQuery,
     useCreateAssetMutation,
     useUpdateAssetMutation,
     useDeleteAssetMutation,
