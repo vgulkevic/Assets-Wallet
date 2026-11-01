@@ -1,43 +1,64 @@
 # Assets Wallet
 
-If you store your money in multiple banks, BTC exchanges and in cash it is extremely inconvenient to track all your balances and convert them to different currencies. You have to either login into each of the systems every time you want to check how much money you have overall or use Excel spreadsheet/Notepad to track this.
+If you keep your money in several banks, exchanges and in cash, tracking your balances and converting them to different currencies is a pain. You either log in to every system each time you want to know how much you have, or keep an Excel spreadsheet or a note.
 
-This app allows you track your holdings/assets value in different currencies in a single place.
+This app lets you track the value of your holdings in different currencies in one place.
 
-Group your assets into categories and add, edit or remove them as you like. Totals are shown in your main and secondary currency (GBP, USD or EUR), using daily ECB reference rates from [Frankfurter](https://frankfurter.dev).
-   
+## Features
+
+- **Categories and assets:** group your assets into categories, then add, edit or remove them.
+- **Two currencies:** totals are shown in your main and secondary currency (GBP, USD or EUR), using daily ECB reference rates from [Frankfurter](https://frankfurter.dev). No API key is needed.
+- **Net worth history:** a chart of your total over 1 year, 3 years or all time, in your main currency. A snapshot is saved every night, and older history can be imported (see [Importing history](#importing-history)).
+- **Allocation:** a donut chart of your assets by category or by currency.
+- **Asset history:** every change to an asset is recorded. Each asset has its own History tab with a chart and a list of its changes. You can exclude a wrong change: it stays in the list but no longer counts in the chart.
+- **"Updated" labels:** each asset shows when it was last updated. It turns amber when the value hasn't been updated for 90 days.
+- **Ordering:** drag and drop categories and assets into your own order.
+- **Show/hide balances:** hide the amounts when someone is looking over your shoulder.
+- **Light and dark mode**, and a layout that works on mobile.
+
 ## Demo
 ![](asset_manager_demo.gif)
 
+## Architecture
+
+The project consists of two parts:
+1. Serverless backend
+2. React front end
+
+The serverless backend includes:
+- **DynamoDB tables:**
+  - `CustomCategory`: categories and their assets
+  - `UserProfile`: the selected currencies
+  - `AssetHistory`: every asset change
+  - `NetWorthHistory`: daily snapshots and imported history
+- **Cognito** authentication for the API and the front end
+- **API Gateway** endpoints with AWS proxy integration and a Cognito authorizer
+- **Lambdas:**
+  - one that manages categories, assets, ordering and history in DynamoDB
+  - one that manages the user profile
+  - one that fetches currency rates
+- **EventBridge:** a scheduled Lambda that saves a net worth snapshot every night at 23:30 UTC
+- **S3 and CloudFront** (with Origin Access Control) to host the front end
+
+An asset change and its history entry are written in a single DynamoDB transaction, so the history can't miss a change.
+
+The front end is a React 19 app built with Vite, MUI, MUI X Charts, Redux Toolkit Query, dnd-kit and Amplify authentication. It has a login page and a dashboard.
+
+All the services used are eligible for the AWS free tier.
+
 ## Getting Started
 
-These instructions will help you deploy your own infrastructure for this project in AWS. All the services used in this project are eligible for 
-free tier. 
-
-The project consists of two parts: 
-1. Serverless backend
-2. React.js front end
-
-Serverless backend includes:
-- DynamoDB for storing the data
-- Cognito authentication for lambdas and for accessing front-end
-- API gateway endpoints with AWS proxy integration and Cognito authoriser
-- Lambdas to manage categories and assets in DynamoDB and to fetch currency rates
-
-Front-end
-- React app (Vite, MUI, Redux Toolkit Query) with Amplify authentication:
-    1. Login page
-    2. Dashboard with your net worth, categories and assets, in light or dark mode and on mobile
+These instructions will help you deploy your own copy of the infrastructure to AWS.
 
 ### Prerequisites
 
 - AWS account
 - Terraform >= 1.10
-- Node.js >= 22 (Lambdas run on `nodejs24.x`)
+- Node.js >= 22 (the Lambdas run on `nodejs24.x`)
 - Java >= 17 (for the Gradle wrapper)
 - AWS CLI v2
 
-Using macOS terminal
+On macOS:
 ```
 brew install hashicorp/tap/terraform
 brew install node awscli
@@ -45,30 +66,51 @@ brew install node awscli
 
 ### Installing
 
-Follow the steps to: 
-1. Deploy serverless infrastructure
-2. Deploy publicly accessible front-end with login page
-3. Create your user in Cognito
+These steps deploy the serverless infrastructure and a public front end with a login page, then create your Cognito user.
 
-<br/><br/>
+1. **Set up the Terraform state bucket:**
+    - In `backend/category-api/terraform/state/variables.tf`, change the default variables (or pass them to `terraform apply` in the next step).
+    - From the root of the project, run:
+        ```
+        cd ./backend/category-api/terraform/state
+        terraform init && terraform apply
+        ```
+      State locking uses S3 lock files, so no DynamoDB table is needed.
+2. **Set the properties:** fill in the BACKEND properties and `frontend_bucket_name` in `gradle.properties`, or in `~/.gradle/gradle.properties` to keep them out of git.
+3. **Deploy the backend infrastructure:**
+    1. Run `./gradlew :backend:category-api:plan`. This packages the Lambdas and the layer and writes `terraform/tfplan`. **Read the plan output** before you continue.
+    2. Run `./gradlew :backend:category-api:apply`. This applies exactly that plan.
 
-1. Set up your terraform state bucket:
+    The DynamoDB tables and the Cognito user pool have `prevent_destroy` and deletion protection, so a plan that would delete them fails instead.
+4. **Deploy the front end:** run `./gradlew :backend:category-api:deployFrontend`. It builds the front end with the API URL and Cognito IDs from the Terraform outputs, uploads it to S3 and invalidates CloudFront.
+5. **Create your user** with the AWS CLI:
+    ```
+    aws cognito-idp --profile <your_profile> admin-create-user --user-pool-id <your_user_pool_id> --username <username> --temporary-password <temp_pass_for_first_login> --message-action SUPPRESS
+    ```
+6. **Log in:** open the `frontend_url` printed by `terraform output`.
 
-    - Go to `/backend/category-api/terraform/state/variables.tf` and change the default variables (or specify them when running `terraform apply` in the next step)
-    - Use terminal from the root of the project to run:
-        - ```cd ./backend/category-api/terraform/state```
-        - ```terraform init && terraform apply``` to create the state bucket (state locking uses S3 lock files, no DynamoDB table needed)
+In IntelliJ IDEA, the same Gradle tasks are under `asset_manager > backend > category-api > Tasks > other`.
 
-2. Set your BACKEND properties and `frontend_bucket_name` in `gradle.properties` (or in `~/.gradle/gradle.properties` to keep them out of git).
-3. Deploy the backend infrastructure with Gradle:
-    1. `asset_manager > backend > category-api > Tasks > other > plan` packages the Lambdas and layer and writes `terraform/tfplan`. **Read the plan output** before continuing.
-    2. `asset_manager > backend > category-api > Tasks > other > apply` applies exactly that plan.
+### Importing history
 
-    DynamoDB tables and the Cognito user pool have `prevent_destroy` and deletion protection, so a plan that would delete them fails instead.
-4. Deploy the frontend: `asset_manager > backend > category-api > Tasks > other > deployFrontend` builds it with the API url and Cognito ids from terraform outputs, uploads it to S3 and invalidates CloudFront.
-5. Use AWS CLI to create your user:
-    ```aws cognito-idp --profile <your_profile> admin-create-user --user-pool-id <your_user_pool_id> --username <username> --temporary-password <temp_pass_for_first_login> --message-action SUPPRESS```
-6. Open the `frontend_url` printed by `terraform output` and log in.
+The nightly snapshot only records history from the day you deploy. To add your earlier totals, write them to a file with one month per line (`month.year - total`):
+
+```
+04.2023 - 210500
+05.2023 - 214300
+```
+
+Then run this from `backend/`:
+
+```
+NODE_PATH=js-common/nodejs/node_modules AWS_PROFILE=<your_profile> \
+  node scripts/import-history.mjs --stage <stage> --user-id <cognito sub> --net-worth <file> --currency EUR --dry-run
+```
+
+- **Dates and currencies:** each line is saved on the last day of its month. It's converted to GBP, USD and EUR using the ECB rate of that day.
+- **`--baseline`:** records each asset's current value as its starting value in the asset history. Only assets that don't have a history yet get one.
+- **`--dry-run`:** prints what the script would write without writing anything. Remove it to import.
+- **Re-running:** the script never overwrites existing entries, so it's safe to run again. The nightly snapshot never replaces an imported entry either.
 
 ### Local development
 
@@ -84,6 +126,8 @@ To run against your deployed backend instead:
 cp .env.example .env.local   # fill in values from `terraform output`
 npm start
 ```
+
+`npm run lint` and `npm run build` are also run by CI (`.github/workflows/ci.yml`), along with Terraform validation and `npm audit`. Dependabot keeps the dependencies up to date.
 
 ## Authors
 
