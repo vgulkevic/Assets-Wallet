@@ -8,6 +8,8 @@ const CURRENCIES = ['GBP', 'USD', 'EUR'];
 
 // One item per user and day: UserId (PK) + SnapshotDate (SK, YYYY-MM-DD), with the total in every supported currency.
 // Source is "snapshot" (nightly job) or "import" (history entered by hand); imported entries are never overwritten.
+// Snapshots also break the total down by category (ByCategory, keyed by CategoryUid, with the name it had that day)
+// and by the currency the assets are held in (ByCurrency, with the amount held in that currency); imports have neither.
 class NetWorthOperations {
 
   static async getHistory(userId) {
@@ -23,7 +25,15 @@ class NetWorthOperations {
       ExclusiveStartKey = res.LastEvaluatedKey;
     } while (ExclusiveStartKey);
 
-    return items.map(item => ({date: item.SnapshotDate, totals: item.Totals, source: item.Source}));
+    return items.map(item => ({
+      date: item.SnapshotDate,
+      totals: item.Totals,
+      source: item.Source,
+      byCategory: item.ByCategory && Object.entries(item.ByCategory)
+        .map(([id, category]) => ({id, name: category.Name, totals: category.Totals})),
+      byCurrency: item.ByCurrency && Object.entries(item.ByCurrency)
+        .map(([currency, holding]) => ({currency, amount: holding.Amount, totals: holding.Totals}))
+    }));
   }
 
   // Saves today's net worth of every user that has categories.
@@ -39,6 +49,8 @@ class NetWorthOperations {
           UserId: userId,
           SnapshotDate: today,
           Totals: totalsInAllCurrencies(assets, eurRates),
+          ByCategory: byCategory(categories, eurRates),
+          ByCurrency: byCurrency(assets, eurRates),
           AssetCount: assets.length,
           Source: 'snapshot',
           CreatedAt: now
@@ -91,6 +103,21 @@ function totalsInAllCurrencies(assets, eurRates) {
   }, 0);
 
   return Object.fromEntries(CURRENCIES.map(c => [c, Math.round(totalInEur * eurRates[c] * 100) / 100]));
+}
+
+function byCategory(categories, eurRates) {
+  return Object.fromEntries(categories.map(category => [category.CategoryUid, {
+    Name: category.CategoryName,
+    Totals: totalsInAllCurrencies(Object.values(category.Assets || {}), eurRates)
+  }]));
+}
+
+function byCurrency(assets, eurRates) {
+  const held = Object.groupBy(assets, asset => asset.AssetCurrency);
+  return Object.fromEntries(Object.entries(held).map(([currency, inCurrency]) => [currency, {
+    Amount: Math.round(inCurrency.reduce((sum, asset) => sum + parseFloat(asset.AssetAmount), 0) * 100) / 100,
+    Totals: totalsInAllCurrencies(inCurrency, eurRates)
+  }]));
 }
 
 module.exports = {NetWorthOperations, totalsInAllCurrencies};
