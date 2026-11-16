@@ -43,6 +43,7 @@ export default function useDashboardData() {
         currencies,
         categories,
         totals,
+        rates,
         ratesDate: rates?.date,
         isLoading: profileQuery.isLoading || categoriesQuery.isLoading || ratesQuery.isLoading,
         isFetching: categoriesQuery.isFetching || ratesQuery.isFetching,

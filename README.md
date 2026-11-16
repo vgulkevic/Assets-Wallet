@@ -9,8 +9,10 @@ This app lets you track the value of your holdings in different currencies in on
 - **Categories and assets:** group your assets into categories, then add, edit or remove them.
 - **Two currencies:** totals are shown in your main and secondary currency (GBP, USD or EUR), using daily ECB reference rates from [Frankfurter](https://frankfurter.dev). No API key is needed.
 - **Net worth history:** a chart of your total over 1 year, 3 years or all time, in your main currency. A snapshot is saved every night, and older history can be imported (see [Importing history](#importing-history)).
+- **Breakdown over time:** switch the history chart to Category or Currency to see the total stacked by category or by the currency the money is held in, with each one's change over the period. The breakdown comes from the nightly snapshots, so it starts from the first snapshot that saved it (imported history only has totals).
 - **Allocation:** a donut chart of your assets by category or by currency.
 - **Asset history:** every change to an asset is recorded. Each asset has its own History tab with a chart and a list of its changes. You can exclude a wrong change: it stays in the list but no longer counts in the chart.
+- **Update balances:** one screen with every asset, for going through all your accounts in one go. Type the new amounts (Enter moves to the next one), or tick a balance that hasn't changed to mark it as checked; it shows how much your net worth changes before you save.
 - **"Updated" labels:** each asset shows when it was last updated. It turns amber when the value hasn't been updated for 90 days.
 - **Ordering:** drag and drop categories and assets into your own order.
 - **Show/hide balances:** hide the amounts when someone is looking over your shoulder.

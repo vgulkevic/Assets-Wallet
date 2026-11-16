@@ -12,12 +12,14 @@ import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 import TopBar from "./TopBar";
 import SummaryCard from "./SummaryCard";
 import CategoryCard from "./CategoryCard";
 import NetWorthChart from "./NetWorthChart";
 import AllocationCard from "./AllocationCard";
 import CategoryDialog from "./CategoryDialog";
+import UpdateBalancesDialog from "./UpdateBalancesDialog";
 import useDashboardData from "./useDashboardData";
 import {BalancesVisibilityProvider} from "./balancesVisibility";
 import {useReorderCategoriesMutation} from "../api/assetManagerApi";
@@ -32,8 +34,9 @@ export default function DashboardPage() {
 }
 
 function Dashboard() {
-    const {currencies, categories, totals, ratesDate, isLoading, isError, retry} = useDashboardData();
+    const {currencies, categories, totals, rates, ratesDate, isLoading, isError, retry} = useDashboardData();
     const [addingCategory, setAddingCategory] = useState(false);
+    const [updatingBalances, setUpdatingBalances] = useState(false);
     const [reorderCategories] = useReorderCategoriesMutation();
     const sensors = useDragSensors();
 
@@ -58,18 +61,24 @@ function Dashboard() {
 
                     <Grid container spacing={3}>
                         <Grid size={{xs: 12, md: 7, lg: 8}}>
-                            <NetWorthChart currencies={currencies} currentTotal={totals?.main}/>
+                            <NetWorthChart currencies={currencies} currentTotal={totals?.main} categories={categories}/>
                         </Grid>
                         <Grid size={{xs: 12, md: 5, lg: 4}}>
                             <AllocationCard categories={categories} currencies={currencies}/>
                         </Grid>
                     </Grid>
 
-                    <Stack direction="row" sx={{justifyContent: "space-between", alignItems: "center"}}>
+                    <Stack direction="row" sx={{justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1.5}}>
                         <Typography variant="h6" component="h2">Categories</Typography>
-                        <Button variant="contained" startIcon={<AddIcon/>} onClick={() => setAddingCategory(true)}>
-                            New category
-                        </Button>
+                        <Stack direction="row" spacing={1} sx={{"& .MuiButton-root": {whiteSpace: "nowrap"}}}>
+                            {totals?.assetCount > 0 &&
+                                <Button variant="outlined" startIcon={<EditNoteIcon/>} onClick={() => setUpdatingBalances(true)}>
+                                    Update balances
+                                </Button>}
+                            <Button variant="contained" startIcon={<AddIcon/>} onClick={() => setAddingCategory(true)}>
+                                New category
+                            </Button>
+                        </Stack>
                     </Stack>
 
                     {!categories && !isError && [0, 1].map((i) =>
@@ -98,6 +107,8 @@ function Dashboard() {
             </Container>
 
             {addingCategory && <CategoryDialog onClose={() => setAddingCategory(false)}/>}
+            {updatingBalances && categories &&
+                <UpdateBalancesDialog categories={categories} currencies={currencies} rates={rates} onClose={() => setUpdatingBalances(false)}/>}
         </Box>
     );
 }

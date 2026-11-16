@@ -44,8 +44,19 @@ const baselines = categories.flatMap((category) => category.assets
         name: asset.name, amount: asset.amount, currency: asset.currency, excluded: false
     })));
 
-// monthly net worth for 3.5 years, rising with some noise; "import" entries like the real migrated history
-const netWorthHistory = Array.from({length: 43}, (_, i) => {
+// 1 GBP in other currencies
+const gbpRates = {
+    EUR: 1.1993,
+    USD: 1.3399
+};
+const inAllCurrencies = (amount, currency) => {
+    const gbp = amount / ({GBP: 1, ...gbpRates})[currency];
+    return {GBP: Math.round(gbp * 100) / 100, EUR: Math.round(gbp * gbpRates.EUR * 100) / 100, USD: Math.round(gbp * gbpRates.USD * 100) / 100};
+};
+const addTotals = (a, b) => Object.fromEntries(Object.keys(b).map((currency) => [currency, Math.round(((a?.[currency] ?? 0) + b[currency]) * 100) / 100]));
+
+// monthly net worth for 3.5 years up to two months ago, rising with some noise; "import" entries like the real migrated history
+const imported = Array.from({length: 41}, (_, i) => {
     const month = new Date();
     month.setUTCDate(1);
     month.setUTCMonth(month.getUTCMonth() - 42 + i + 1);
@@ -58,16 +69,38 @@ const netWorthHistory = Array.from({length: 43}, (_, i) => {
     };
 });
 
+// then nightly snapshots for the last 45 days, with the category and currency breakdowns the snapshot job saves;
+// every asset grows towards today's amount at its own pace
+const snapshots = Array.from({length: 45}, (_, i) => {
+    const age = 45 - i;
+    const byCategory = [];
+    const byCurrency = new Map();
+    categories.forEach((category, c) => {
+        let categoryTotals = {GBP: 0, EUR: 0, USD: 0};
+        category.assets.forEach((asset, a) => {
+            const amount = Math.round(parseFloat(asset.amount) * (1 - age * (0.001 + 0.002 * ((c + a) % 3)) + Math.sin(age + a) * 0.01));
+            const totals = inAllCurrencies(amount, asset.currency);
+            categoryTotals = addTotals(categoryTotals, totals);
+            const held = byCurrency.get(asset.currency);
+            byCurrency.set(asset.currency, {currency: asset.currency, amount: (held?.amount ?? 0) + amount, totals: addTotals(held?.totals, totals)});
+        });
+        byCategory.push({id: category.id, name: category.name, totals: categoryTotals});
+    });
+    return {
+        date: daysAgo(age).slice(0, 10),
+        totals: byCategory.reduce((sum, category) => addTotals(sum, category.totals), {GBP: 0, EUR: 0, USD: 0}),
+        source: "snapshot",
+        byCategory,
+        byCurrency: [...byCurrency.values()]
+    };
+});
+
 const data = {
     categories,
     assetHistory: [...baselines, ...spendingHistory],
-    netWorthHistory,
+    netWorthHistory: [...imported, ...snapshots],
 
-    // 1 GBP in other currencies
-    gbpRates: {
-        EUR: 1.1993,
-        USD: 1.3399
-    },
+    gbpRates,
     ratesDate: "2026-10-30",
 
     selectedCurrencies: {

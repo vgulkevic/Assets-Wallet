@@ -66,7 +66,7 @@ function describe(change, money) {
             if (change.previousName !== change.name) {
                 parts.push(`renamed from "${change.previousName}"`);
             }
-            return parts.join(", ") || "Saved without changes";
+            return parts.join(", ") || "Checked, no change";
         }
     }
 }

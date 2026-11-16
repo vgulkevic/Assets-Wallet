@@ -60,6 +60,25 @@ export const assetManagerApi = createApi({
             query: ({categoryId, asset}) => ({url: "update-asset", method: "POST", body: {categoryId, asset}}),
             invalidatesTags: (result, error, {asset}) => ["Categories", {type: "AssetHistory", id: asset.id}]
         }),
+        // Saves several assets one after another (assets of a category share one DynamoDB item) and refetches once at the end.
+        // Each save also bumps the asset's "updated" date, so an unchanged amount can be saved to mark it as checked.
+        // On a failure it stops and reports which assets were saved before it.
+        updateAssets: build.mutation({
+            async queryFn(updates, api, extraOptions, baseQuery) {
+                const savedIds = [];
+                for (const {categoryId, asset} of updates) {
+                    const result = await baseQuery({url: "update-asset", method: "POST", body: {categoryId, asset}});
+                    if (result.error) {
+                        const reason = typeof result.error.data === "string" ? result.error.data : `request failed (${result.error.status})`;
+                        const saved = savedIds.length ? ` The ${savedIds.length} before it ${savedIds.length === 1 ? "was" : "were"} saved.` : "";
+                        return {error: {status: result.error.status, data: `Couldn't save "${asset.name}": ${reason}.${saved}`, savedIds}};
+                    }
+                    savedIds.push(asset.id);
+                }
+                return {data: {savedIds}};
+            },
+            invalidatesTags: (result, error, updates) => ["Categories", ...updates.map(({asset}) => ({type: "AssetHistory", id: asset.id}))]
+        }),
         deleteAsset: build.mutation({
             query: ({categoryId, assetId}) => ({url: "delete-asset", method: "DELETE", body: {categoryId, assetId}}),
             invalidatesTags: (result, error, {assetId}) => ["Categories", {type: "AssetHistory", id: assetId}]
@@ -149,6 +168,7 @@ export const {
     useGetNetWorthHistoryQuery,
     useCreateAssetMutation,
     useUpdateAssetMutation,
+    useUpdateAssetsMutation,
     useDeleteAssetMutation,
     useGetUserProfileQuery,
     useUpdateUserProfileMutation,

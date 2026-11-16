@@ -10,9 +10,8 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import {sum} from "../utils/money";
+import {paletteColor} from "../utils/palette";
 import {useBalancesVisibility} from "./balancesVisibility";
-
-const PALETTE = ["#1e88e5", "#43a047", "#fb8c00", "#8e24aa", "#00acc1", "#e53935", "#fdd835", "#6d4c41", "#3949ab", "#7cb342"];
 
 function useSlices(categories, groupBy) {
     return useMemo(() => {
@@ -31,7 +30,7 @@ function useSlices(categories, groupBy) {
         return [...groups.entries()]
             .filter(([, value]) => value > 0)
             .sort((a, b) => b[1] - a[1])
-            .map(([label, value], i) => ({id: label, label, value, share: total ? value / total : 0, color: PALETTE[i % PALETTE.length]}));
+            .map(([label, value], i) => ({id: label, label, value, share: total ? value / total : 0, color: paletteColor(i)}));
     }, [categories, groupBy]);
 }
 
